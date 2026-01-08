@@ -191,36 +191,16 @@
                                 <a href="{{ path('app_product_show', {id: product.id}) }}" class="text-decoration-none text-dark">
                                     <div class="image-swap-container">
                                         {% set images = product.images %}
-
                                         {% if images|length > 0 %}
-                                            {# --- 1. ПРЕДНА СНИМКА (FRONT) --- #}
-                                            {% if 'http' in images[0].filename %}
-                                                <img src="{{ images[0].filename }}" class="img-front" alt="{{ product.name }}">
-                                            {% else %}
-                                                <img src="{{ asset('uploads/products/' ~ images[0].filename) }}" class="img-front" alt="{{ product.name }}">
-                                            {% endif %}
-
-                                            {# --- 2. ЗАДНА СНИМКА (BACK - при ховър) --- #}
-                                            {# Избираме втората снимка, ако има такава, иначе повтаряме първата #}
+                                            <img src="{{ asset('uploads/products/' ~ images[0].filename) }}" class="img-front" alt="{{ product.name }}">
                                             {% if images|length > 1 %}
-                                                {% set backImage = images[1] %}
+                                                <img src="{{ asset('uploads/products/' ~ images[1].filename) }}" class="img-back" alt="{{ product.name }}">
                                             {% else %}
-                                                {% set backImage = images[0] %}
+                                                <img src="{{ asset('uploads/products/' ~ images[0].filename) }}" class="img-back" alt="{{ product.name }}">
                                             {% endif %}
-
-                                            {% if 'http' in backImage.filename %}
-                                                <img src="{{ backImage.filename }}" class="img-back" alt="{{ product.name }}">
-                                            {% else %}
-                                                <img src="{{ asset('uploads/products/' ~ backImage.filename) }}" class="img-back" alt="{{ product.name }}">
-                                            {% endif %}
-
                                         {% else %}
-                                            {# АКО НЯМА НИКАКВИ СНИМКИ #}
-                                            <div class="d-flex align-items-center justify-content-center h-100 bg-light text-muted">
-                                                <i class="fas fa-image fa-2x text-secondary"></i>
-                                            </div>
+                                            <div class="d-flex align-items-center justify-content-center h-100 bg-light text-muted">Няма снимка</div>
                                         {% endif %}
-
                                         <div class="hover-overlay"><span class="badge-view">РАЗГЛЕДАЙ</span></div>
                                     </div>
                                     <div class="p-3 pb-0">
