@@ -12,7 +12,14 @@ class SecurityController extends AbstractController
     #[Route('/login', name: 'app_login')]
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
+        // Проверяваме дали потребителят вече е логнат
         if ($this->getUser()) {
+            // Ако е ADMIN, го пращаме в админ панела
+            if ($this->isGranted('ROLE_ADMIN')) {
+                return $this->redirectToRoute('admin'); // Увери се, че това е името на твоя админ маршрут
+            }
+
+            // Всички останали отиват на началната страница
             return $this->redirectToRoute('app_home');
         }
 
@@ -24,7 +31,6 @@ class SecurityController extends AbstractController
             'error' => $error,
         ]);
     }
-
     #[Route('/logout', name: 'app_logout')]
     public function logout(): void
     {

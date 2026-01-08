@@ -89,16 +89,21 @@ class GoogleAuthenticator extends OAuth2Authenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
-        // Redirect to homepage or cart after successful login
+        // 1. Първо проверяваме ролята на потребителя
+        if (in_array('ROLE_ADMIN', $token->getUser()->getRoles(), true)) {
+            return new RedirectResponse($this->router->generate('admin'));
+        }
+
+        // 2. Проверяваме дали има запазен път (например ако е искал да влезе в количката преди логин)
         $targetPath = $request->getSession()->get('_security.main.target_path');
 
         if ($targetPath) {
             return new RedirectResponse($targetPath);
         }
 
+        // 3. По подразбиране пращаме към началната страница
         return new RedirectResponse($this->router->generate('app_home'));
     }
-
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
     {
         $message = strtr($exception->getMessageKey(), $exception->getMessageData());
