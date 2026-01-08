@@ -1,0 +1,358 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ product.name }} - Product Details{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/drift-zoom@1.3.1/dist/drift-basic.min.css">
+    <style>
+        .product-details {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        }
+
+        .price-display {
+            font-size: 2.5rem;
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        /* Gallery Styles */
+        .gallery-container {
+            position: sticky;
+            top: 20px;
+        }
+
+        .main-image-wrapper {
+            width: 100%;
+            height: 500px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #e9ecef;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .main-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transform-origin: center center;
+            transition: transform 0.1s ease-out;
+            will-change: transform;
+            cursor: crosshair;
+        }
+
+        /* Mobile specific adjustments */
+        @media (max-width: 768px) {
+            .main-image-wrapper {
+                height: 350px;
+                touch-action: none;
+            }
+        }
+
+        .thumbnails-container {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .thumbnail {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .thumbnail:hover, .thumbnail.active {
+            border-color: var(--teal);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Drift Zoom Customization (Desktop only) */
+        .drift-zoom-pane {
+            background: #fff;
+            border: 3px solid var(--teal);
+            border-radius: 8px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            z-index: 9999;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container mt-4 mb-5">
+        {# Breadcrumbs #}
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ path('app_home') }}">Home</a></li>
+                <li class="breadcrumb-item active">{{ product.name }}</li>
+            </ol>
+        </nav>
+
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <<div class="gallery-container">
+                    {% set coverImage = product.coverImage %}
+                    {% set allImages = product.images %}
+
+                    {# --- ЛОГИКА ЗА ГЛАВНАТА СНИМКА --- #}
+                    <div class="main-image-wrapper" id="imageWrapper">
+                        {% if coverImage %}
+                            {% if 'http' in coverImage.filename %}
+                                {# Cloudinary #}
+                                <img src="{{ coverImage.filename }}"
+                                     class="main-image"
+                                     id="mainImage"
+                                     data-zoom="{{ coverImage.filename }}"
+                                     alt="{{ product.name }}">
+                            {% else %}
+                                {# Стара локална снимка #}
+                                <img src="{{ asset('uploads/products/' ~ coverImage.filename) }}"
+                                     class="main-image"
+                                     id="mainImage"
+                                     data-zoom="{{ asset('uploads/products/' ~ coverImage.filename) }}"
+                                     alt="{{ product.name }}">
+                            {% endif %}
+
+                        {% elseif product.imageFilename %}
+                            {# Резервен вариант (ако няма ProductImage обекти) #}
+                            {% if 'http' in product.imageFilename %}
+                                <img src="{{ product.imageFilename }}"
+                                     class="main-image"
+                                     id="mainImage"
+                                     data-zoom="{{ product.imageFilename }}"
+                                     alt="{{ product.name }}">
+                            {% else %}
+                                <img src="{{ asset('uploads/products/' ~ product.imageFilename) }}"
+                                     class="main-image"
+                                     id="mainImage"
+                                     data-zoom="{{ asset('uploads/products/' ~ product.imageFilename) }}"
+                                     alt="{{ product.name }}">
+                            {% endif %}
+
+                        {% else %}
+                            <img src="{{ asset('images/placeholder.jpg') }}"
+                                 class="main-image"
+                                 id="mainImage"
+                                 alt="No image available">
+                        {% endif %}
+                    </div>
+
+                    {# --- ЛОГИКА ЗА МИНИАТЮРИТЕ (THUMBNAILS) --- #}
+                    {% if allImages|length > 1 %}
+                        <div class="thumbnails-container">
+                            {% for image in allImages %}
+                                {# Определяме правилния път за всяка малка снимка #}
+                                {% if 'http' in image.filename %}
+                                    {% set imgUrl = image.filename %}
+                                {% else %}
+                                    {% set imgUrl = asset('uploads/products/' ~ image.filename) %}
+                                {% endif %}
+
+                                <div class="thumbnail {% if loop.first %}active{% endif %}"
+                                     data-image="{{ imgUrl }}"
+                                     onclick="switchImage(this)">
+                                    <img src="{{ imgUrl }}" alt="View {{ loop.index }}">
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="product-details">
+                    <h1 class="mb-3 fw-bold">{{ product.name }}</h1>
+
+                    <div class="d-flex align-items-center mb-4">
+                        <span class="price-display me-3">{{ product.price }} евро</span>
+
+                        {# ТУК Е ПРОМЯНАТА: Добавихме визуализация на бройката #}
+                        {% if product.stock > 0 %}
+                            <span class="badge bg-success rounded-pill px-3 py-2">
+                                <i class="fas fa-check"></i> В наличност ({{ product.stock }} бр.)
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger rounded-pill px-3 py-2">
+                                <i class="fas fa-times"></i> Изчерпано
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <h5 class="text-muted mb-3">Описание</h5>
+                        <div class="description-content text-secondary">
+                            {{ product.description|raw }}
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="actions">
+                        {% if product.stock > 0 %}
+                            <div class="d-grid gap-2">
+                                <a href="{{ path('app_cart_add', { id: product.id }) }}" class="btn btn-primary btn-lg rounded-pill shadow-sm">
+                                    <i class="fas fa-shopping-cart me-2"></i> Добави в количката
+                                </a>
+                            </div>
+                        {% else %}
+                            <button class="btn btn-secondary btn-lg w-100 rounded-pill" disabled>
+                                Изчерпано
+                            </button>
+                        {% endif %}
+
+                        <a href="{{ path('app_home') }}" class="btn btn-link text-decoration-none mt-3 d-block text-center text-muted">
+                            <i class="fas fa-arrow-left me-1"></i> Продължи пазаруването
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/drift-zoom@1.3.1/dist/Drift.min.js"></script>
+    <script>
+        let driftInstance = null;
+        const mainImage = document.getElementById('mainImage');
+        const imageWrapper = document.getElementById('imageWrapper');
+
+        // 1. Logic for DESKTOP (Drift Zoom)
+        function initDesktopZoom() {
+            if (!mainImage) return;
+
+            if (driftInstance) {
+                return;
+            }
+
+            driftInstance = new Drift(mainImage, {
+                paneContainer: imageWrapper,
+                inlinePane: false,
+                containInline: true,
+                hoverBoundingBox: true,
+                touchBoundingBox: false,
+                zoomFactor: 3,
+                sourceAttribute: 'data-zoom'
+            });
+        }
+
+        // 2. Logic for MOBILE (Touch & Pan Zoom)
+        function initMobileZoom() {
+            if (!mainImage || !imageWrapper) return;
+
+            let isZooming = false;
+
+            imageWrapper.addEventListener('touchstart', function(e) {
+                if (e.touches.length === 1) {
+                    isZooming = true;
+                    handleMobileZoom(e.touches[0]);
+                }
+            }, { passive: true });
+
+            imageWrapper.addEventListener('touchmove', function(e) {
+                if (isZooming && e.touches.length === 1) {
+                    e.preventDefault();
+                    handleMobileZoom(e.touches[0]);
+                }
+            }, { passive: false });
+
+            imageWrapper.addEventListener('touchend', function() {
+                isZooming = false;
+                resetMobileZoom();
+            });
+
+            imageWrapper.addEventListener('touchcancel', function() {
+                isZooming = false;
+                resetMobileZoom();
+            });
+        }
+
+        function handleMobileZoom(touch) {
+            const rect = imageWrapper.getBoundingClientRect();
+
+            let x = ((touch.clientX - rect.left) / rect.width) * 100;
+            let y = ((touch.clientY - rect.top) / rect.height) * 100;
+
+            x = Math.max(0, Math.min(100, x));
+            y = Math.max(0, Math.min(100, y));
+
+            mainImage.style.transformOrigin = `${x}% ${y}%`;
+            mainImage.style.transform = "scale(2.5)";
+        }
+
+        function resetMobileZoom() {
+            mainImage.style.transform = "scale(1)";
+            setTimeout(() => {
+                if (mainImage.style.transform === "scale(1)") {
+                    mainImage.style.transformOrigin = "center center";
+                }
+            }, 100);
+        }
+
+        window.switchImage = function(thumbnail) {
+            const newImageSrc = thumbnail.getAttribute('data-image');
+
+            mainImage.style.opacity = '0.5';
+
+            setTimeout(() => {
+                mainImage.src = newImageSrc;
+                mainImage.setAttribute('data-zoom', newImageSrc);
+                mainImage.style.opacity = '1';
+
+                if (driftInstance) {
+                    driftInstance.setZoomImageURL(newImageSrc);
+                }
+            }, 150);
+
+            document.querySelectorAll('.thumbnail').forEach(thumb => {
+                thumb.classList.remove('active');
+            });
+            thumbnail.classList.add('active');
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.matchMedia("(min-width: 769px)").matches) {
+                initDesktopZoom();
+            } else {
+                initMobileZoom();
+            }
+        });
+
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                if (window.matchMedia("(min-width: 769px)").matches) {
+                    initDesktopZoom();
+                    mainImage.style.transform = "none";
+                } else {
+                    if (driftInstance) {
+                        driftInstance.disable();
+                    }
+                    initMobileZoom();
+                }
+            }, 250);
+        });
+    </script>
+{% endblock %}

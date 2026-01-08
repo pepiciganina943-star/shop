@@ -1,0 +1,39 @@
+<ul class="navbar-nav me-auto mb-2 mb-lg-0">
+    {% for category in categories %}
+
+        {# Проверяваме дали категорията има под-категории (деца) #}
+        {% if category.children is not empty %}
+
+            {# ВАРИАНТ С ПАДАЩО МЕНЮ #}
+            <li class="nav-item dropdown mx-2">
+                <a class="nav-link dropdown-toggle fw-bold text-dark" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    {{ category.name }}
+                </a>
+                <ul class="dropdown-menu">
+                    {# Линк към самата главна категория "Виж всички" #}
+                    <li><a class="dropdown-item" href="{{ path('app_category_show', {id: category.id}) }}">Виж всички {{ category.name }}</a></li>
+                    <li><hr class="dropdown-divider"></li>
+
+                    {# Цикъл през децата #}
+                    {% for child in category.children %}
+                        <li>
+                            <a class="dropdown-item" href="{{ path('app_category_show', {id: child.id}) }}">
+                                {{ child.name }}
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </li>
+
+        {% else %}
+
+            {# ВАРИАНТ ОБИКНОВЕН ЛИНК (без деца) #}
+            <li class="nav-item mx-2">
+                <a class="nav-link fw-bold text-dark" href="{{ path('app_category_show', {id: category.id}) }}">
+                    {{ category.name }}
+                </a>
+            </li>
+
+        {% endif %}
+    {% endfor %}
+</ul>

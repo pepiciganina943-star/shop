@@ -1,0 +1,245 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Поръчка - Bellamie{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    .checkout-container {
+        max-width: 1200px;
+        margin: 40px auto;
+    }
+
+    .checkout-title {
+        font-family: 'Merriweather', serif;
+        color: var(--charcoal);
+        margin-bottom: 30px;
+    }
+
+    .checkout-grid {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 30px;
+    }
+
+    @media (max-width: 768px) {
+        .checkout-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .checkout-form {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .form-section {
+        margin-bottom: 30px;
+    }
+
+    .form-section h3 {
+        color: var(--teal);
+        font-family: 'Merriweather', serif;
+        font-size: 20px;
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+    }
+
+    .form-control {
+        border-radius: 8px;
+        border: 2px solid #e0e0e0;
+        padding: 12px 16px;
+        font-size: 15px;
+        margin-bottom: 15px;
+    }
+
+    .form-control:focus {
+        border-color: var(--teal);
+        box-shadow: 0 0 0 3px rgba(64, 224, 208, 0.1);
+    }
+
+    .order-summary {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        height: fit-content;
+        position: sticky;
+        top: 20px;
+    }
+
+    .summary-title {
+        color: var(--charcoal);
+        font-family: 'Merriweather', serif;
+        font-size: 20px;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid var(--teal);
+    }
+
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 15px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .summary-item:last-child {
+        border-bottom: none;
+    }
+
+    .summary-item-name {
+        font-weight: 500;
+        color: #333;
+        flex: 1;
+    }
+
+    .summary-item-qty {
+        color: #666;
+        margin: 0 10px;
+    }
+
+    .summary-item-price {
+        font-weight: 600;
+        color: var(--teal);
+    }
+
+    .summary-total {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .summary-total-label {
+        font-size: 18px;
+        font-weight: 700;
+        color: #333;
+    }
+
+    .summary-total-amount {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--teal);
+    }
+
+    .btn-submit-order {
+        background: var(--teal);
+        border: none;
+        color: white;
+        padding: 15px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 18px;
+        width: 100%;
+        margin-top: 20px;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+
+    .btn-submit-order:hover {
+        background: var(--teal-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(64, 224, 208, 0.4);
+    }
+
+    .user-info {
+        background: #d1ecf1;
+        border-left: 4px solid #0c5460;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+    }
+
+    .user-info i {
+        color: #0c5460;
+        margin-right: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container checkout-container">
+    <h1 class="checkout-title"><i class="fas fa-shopping-bag"></i> Завършване на Поръчката</h1>
+
+    <div class="checkout-grid">
+        <div class="checkout-form">
+            <div class="user-info">
+                <i class="fas fa-user"></i>
+                <strong>Вход като:</strong> {{ app.user.email }}
+            </div>
+
+            {{ form_start(form) }}
+
+            <div class="form-section">
+                <h3><i class="fas fa-user-circle"></i> Информация за контакт</h3>
+
+                <div class="mb-3">
+                    {{ form_label(form.fullName) }}
+                    {{ form_widget(form.fullName) }}
+                    {{ form_errors(form.fullName) }}
+                </div>
+
+                <div class="mb-3">
+                    {{ form_label(form.phone) }}
+                    {{ form_widget(form.phone) }}
+                    {{ form_errors(form.phone) }}
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3><i class="fas fa-map-marker-alt"></i> Адрес за доставка</h3>
+
+                <div class="mb-3">
+                    {{ form_label(form.address) }}
+                    {{ form_widget(form.address) }}
+                    {{ form_errors(form.address) }}
+                    <small class="form-text text-muted">
+                        Моля, въведете пълен адрес: град, улица, номер, етаж, апартамент
+                    </small>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit-order">
+                <i class="fas fa-check-circle"></i> Потвърди Поръчката
+            </button>
+
+            {{ form_end(form) }}
+        </div>
+
+        <div class="order-summary">
+            <h3 class="summary-title">
+                <i class="fas fa-receipt"></i> Вашата Поръчка
+            </h3>
+
+            {% for item in cartItems %}
+                <div class="summary-item">
+                    <span class="summary-item-name">{{ item.product.name }}</span>
+                    <span class="summary-item-qty">x{{ item.quantity }}</span>
+                    <span class="summary-item-price">{{ (item.product.price * item.quantity)|number_format(2, '.', '') }} лв</span>
+                </div>
+            {% endfor %}
+
+            <div class="summary-total">
+                <span class="summary-total-label">ОБЩО:</span>
+                <span class="summary-total-amount">{{ total|number_format(2, '.', '') }} лв</span>
+            </div>
+
+            <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 6px; font-size: 14px; color: #666;">
+                <i class="fas fa-info-circle"></i>
+                <strong>Важно:</strong> След потвърждаване на поръчката, ще получите имейл с детайли. Нашият екип ще се свърже с вас за потвърждение.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

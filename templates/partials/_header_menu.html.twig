@@ -1,0 +1,9 @@
+<ul class="navbar-nav me-auto mb-2 mb-lg-0">
+    {% for category in categories %}
+        <a href="{{ path('app_category_show', {id: category.id}) }}">
+            {{ category.name }}
+        </a>
+    {% else %}
+        <span>Няма намерени категории</span>
+    {% endfor %}
+</ul>
