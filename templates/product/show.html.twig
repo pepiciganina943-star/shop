@@ -1,6 +1,35 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ product.name }} - Product Details{% endblock %}
+{# 1. ДОБАВЯМЕ META ДАННИ ЗА FACEBOOK #}
+{% block meta_og %}
+    <meta property="og:title" content="{{ product.name }} | Bellamie">
+    <meta property="og:description" content="{{ product.description|striptags|slice(0, 200) }}...">
+    <meta property="og:url" content="{{ app.request.uri }}">
+    <meta property="og:type" content="product">
+    <meta property="product:price:amount" content="{{ product.price }}">
+    <meta property="product:price:currency" content="BGN">
+
+    {# Логика за намиране на правилната снимка за Facebook #}
+    {% set ogImage = '' %}
+    {% if product.coverImage %}
+        {% if 'http' in product.coverImage.filename %}
+            {% set ogImage = product.coverImage.filename %}
+        {% else %}
+            {% set ogImage = absolute_url(asset('uploads/products/' ~ product.coverImage.filename)) %}
+        {% endif %}
+    {% elseif product.imageFilename %}
+        {% if 'http' in product.imageFilename %}
+            {% set ogImage = product.imageFilename %}
+        {% else %}
+            {% set ogImage = absolute_url(asset('uploads/products/' ~ product.imageFilename)) %}
+        {% endif %}
+    {% else %}
+        {% set ogImage = absolute_url(asset('images/placeholder.jpg')) %}
+    {% endif %}
+    <meta property="og:image" content="{{ ogImage }}">
+{% endblock %}
+
+{% block title %}{{ product.name }} - Детайли{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
@@ -15,7 +44,7 @@
 
         .price-display {
             font-size: 2.5rem;
-            color: #28a745;
+            color: var(--teal); /* Използваме твоя цвят */
             font-weight: bold;
         }
 
@@ -103,75 +132,55 @@
         {# Breadcrumbs #}
         <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ path('app_home') }}">Home</a></li>
-                <li class="breadcrumb-item active">{{ product.name }}</li>
+                <li class="breadcrumb-item"><a href="{{ path('app_home') }}">Начало</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
             </ol>
         </nav>
 
         <div class="row">
             <div class="col-lg-6 mb-4">
-                <<div class="gallery-container">
+                <div class="gallery-container">
                     {% set coverImage = product.coverImage %}
                     {% set allImages = product.images %}
 
-                    {# --- ЛОГИКА ЗА ГЛАВНАТА СНИМКА --- #}
+                    {# --- ГЛАВНА СНИМКА --- #}
                     <div class="main-image-wrapper" id="imageWrapper">
                         {% if coverImage %}
                             {% if 'http' in coverImage.filename %}
-                                {# Cloudinary #}
-                                <img src="{{ coverImage.filename }}"
-                                     class="main-image"
-                                     id="mainImage"
-                                     data-zoom="{{ coverImage.filename }}"
-                                     alt="{{ product.name }}">
+                                <img src="{{ coverImage.filename }}" class="main-image" id="mainImage" data-zoom="{{ coverImage.filename }}" alt="{{ product.name }}">
                             {% else %}
-                                {# Стара локална снимка #}
-                                <img src="{{ asset('uploads/products/' ~ coverImage.filename) }}"
-                                     class="main-image"
-                                     id="mainImage"
-                                     data-zoom="{{ asset('uploads/products/' ~ coverImage.filename) }}"
-                                     alt="{{ product.name }}">
+                                <img src="{{ asset('uploads/products/' ~ coverImage.filename) }}" class="main-image" id="mainImage" data-zoom="{{ asset('uploads/products/' ~ coverImage.filename) }}" alt="{{ product.name }}">
                             {% endif %}
-
                         {% elseif product.imageFilename %}
-                            {# Резервен вариант (ако няма ProductImage обекти) #}
                             {% if 'http' in product.imageFilename %}
-                                <img src="{{ product.imageFilename }}"
-                                     class="main-image"
-                                     id="mainImage"
-                                     data-zoom="{{ product.imageFilename }}"
-                                     alt="{{ product.name }}">
+                                <img src="{{ product.imageFilename }}" class="main-image" id="mainImage" data-zoom="{{ product.imageFilename }}" alt="{{ product.name }}">
                             {% else %}
-                                <img src="{{ asset('uploads/products/' ~ product.imageFilename) }}"
-                                     class="main-image"
-                                     id="mainImage"
-                                     data-zoom="{{ asset('uploads/products/' ~ product.imageFilename) }}"
-                                     alt="{{ product.name }}">
+                                <img src="{{ asset('uploads/products/' ~ product.imageFilename) }}" class="main-image" id="mainImage" data-zoom="{{ asset('uploads/products/' ~ product.imageFilename) }}" alt="{{ product.name }}">
                             {% endif %}
-
                         {% else %}
-                            <img src="{{ asset('images/placeholder.jpg') }}"
-                                 class="main-image"
-                                 id="mainImage"
-                                 alt="No image available">
+                            <img src="{{ asset('images/placeholder.jpg') }}" class="main-image" id="mainImage" alt="Няма снимка">
                         {% endif %}
                     </div>
 
-                    {# --- ЛОГИКА ЗА МИНИАТЮРИТЕ (THUMBNAILS) --- #}
+                    {# --- МИНИАТЮРИ --- #}
                     {% if allImages|length > 1 %}
                         <div class="thumbnails-container">
                             {% for image in allImages %}
-                                {# Определяме правилния път за всяка малка снимка #}
                                 {% if 'http' in image.filename %}
                                     {% set imgUrl = image.filename %}
                                 {% else %}
                                     {% set imgUrl = asset('uploads/products/' ~ image.filename) %}
                                 {% endif %}
 
+                                {# Lighthouse: Добавени role, tabindex и aria-label за достъпност #}
                                 <div class="thumbnail {% if loop.first %}active{% endif %}"
+                                     role="button"
+                                     tabindex="0"
+                                     aria-label="Виж снимка {{ loop.index }}"
                                      data-image="{{ imgUrl }}"
-                                     onclick="switchImage(this)">
-                                    <img src="{{ imgUrl }}" alt="View {{ loop.index }}">
+                                     onclick="switchImage(this)"
+                                     onkeydown="if(event.key === 'Enter') switchImage(this)">
+                                    <img src="{{ imgUrl }}" alt="">
                                 </div>
                             {% endfor %}
                         </div>
@@ -184,9 +193,8 @@
                     <h1 class="mb-3 fw-bold">{{ product.name }}</h1>
 
                     <div class="d-flex align-items-center mb-4">
-                        <span class="price-display me-3">{{ product.price }} евро</span>
+                        <span class="price-display me-3">{{ product.price }} лв.</span>
 
-                        {# ТУК Е ПРОМЯНАТА: Добавихме визуализация на бройката #}
                         {% if product.stock > 0 %}
                             <span class="badge bg-success rounded-pill px-3 py-2">
                                 <i class="fas fa-check"></i> В наличност ({{ product.stock }} бр.)
@@ -199,10 +207,22 @@
                     </div>
 
                     <div class="mb-4">
-                        <h5 class="text-muted mb-3">Описание</h5>
+                        {# Lighthouse: h5 сменен на h2 с клас h5 за правилна йерархия #}
+                        <h2 class="h5 text-muted mb-3">Описание</h2>
                         <div class="description-content text-secondary">
                             {{ product.description|raw }}
                         </div>
+                    </div>
+
+                    {# 3. ДОБАВЕН БУТОН ЗА FACEBOOK #}
+                    <div class="mb-4 pt-3 border-top">
+                        <p class="small text-muted mb-2">Харесва ли ви? Споделете с приятели:</p>
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ app.request.uri|url_encode }}"
+                           target="_blank"
+                           rel="noopener"
+                           class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                            <i class="fab fa-facebook me-2"></i> Сподели във Facebook
+                        </a>
                     </div>
 
                     <hr class="my-4">
@@ -246,15 +266,18 @@
                 return;
             }
 
-            driftInstance = new Drift(mainImage, {
-                paneContainer: imageWrapper,
-                inlinePane: false,
-                containInline: true,
-                hoverBoundingBox: true,
-                touchBoundingBox: false,
-                zoomFactor: 3,
-                sourceAttribute: 'data-zoom'
-            });
+            // Проверка дали Drift е зареден правилно
+            if (typeof Drift !== 'undefined') {
+                driftInstance = new Drift(mainImage, {
+                    paneContainer: imageWrapper,
+                    inlinePane: false,
+                    containInline: true,
+                    hoverBoundingBox: true,
+                    touchBoundingBox: false,
+                    zoomFactor: 3,
+                    sourceAttribute: 'data-zoom'
+                });
+            }
         }
 
         // 2. Logic for MOBILE (Touch & Pan Zoom)
