@@ -1,0 +1,51 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Dependencies (will be installed in container)
+/vendor/
+/node_modules/
+
+# Cache and logs (will be generated)
+/var/
+/.symfony/
+
+# Environment files
+.env.local
+.env.local.php
+.env.*.local
+
+# Testing
+/tests/
+/phpunit.xml.dist
+/.phpunit.result.cache
+
+# Documentation
+/docs/
+*.md
+!DEPLOYMENT_GUIDE.md
+
+# Build artifacts
+/public/build/
+/public/bundles/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.old
+
+# Development only
+/docker-compose.yml
+/Dockerfile.old

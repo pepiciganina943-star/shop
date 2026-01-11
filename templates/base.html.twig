@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Bellamie - Ръчно изработени творения{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <meta name="description" content="Уникални, ръчно изработени творения за вас и вашия дом от Bellamie.">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --teal: #40E0D0;
+            --teal-dark: #35c5b8;
+            --cream: #f8f5f2;
+            --charcoal: #333;
+            --border-light: #e8e3de;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: var(--cream);
+            color: var(--charcoal);
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Merriweather', serif;
+        }
+
+        .header-top {
+            background-color: white;
+            padding: 25px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--teal);
+            text-decoration: none;
+            font-family: 'Merriweather', serif;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            font-size: 28px;
+        }
+
+        .search-container {
+            max-width: 650px;
+        }
+
+        #search-input {
+            border-radius: 8px;
+            padding: 14px 20px;
+            border: 2px solid var(--border-light);
+            box-shadow: none;
+            font-size: 15px;
+            transition: border-color 0.3s;
+        }
+
+        #search-input:focus {
+            border-color: var(--teal);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(64, 224, 208, 0.1);
+        }
+
+        .header-icons a {
+            color: var(--charcoal);
+            font-size: 22px;
+            margin-left: 20px;
+            text-decoration: none;
+            position: relative;
+            transition: color 0.3s;
+        }
+
+        .header-icons a:hover {
+            color: var(--teal);
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: var(--teal);
+            color: white;
+            border-radius: 50%;
+            padding: 2px 7px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .banner-message {
+            background: linear-gradient(135deg, var(--teal) 0%, #5ee3d2 100%);
+            color: white;
+            text-align: center;
+            padding: 12px 0;
+            font-size: 15px;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- НАСИЛСТВЕН ФИКС ЗА МЕНЮТО --- */
+        .categories-nav {
+            background-color: white;
+            padding: 18px 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        /* 1. Основният контейнер */
+        .categories-nav .container {
+            display: flex !important;
+            align-items: center;
+        }
+
+        /* 2. "Магията": Намираме ВСЕКИ вложен елемент (div или ul), който държи линковете */
+        .categories-nav .container > * {
+            display: flex !important;
+            flex-direction: row !important; /* Хоризонтално! */
+            flex-wrap: wrap;
+            gap: 15px; /* Твоето отстояние */
+            margin: 0;
+            padding: 0;
+            list-style: none; /* Маха точките, ако е списък */
+        }
+
+        /* 3. Ако самите линкове са в li (списък) */
+        .categories-nav li {
+            display: inline-block;
+        }
+
+        .categories-nav a {
+            color: var(--charcoal);
+            text-decoration: none;
+            font-size: 16px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 1px;
+            white-space: nowrap; /* Да не се чупи текста */
+        }
+
+        .categories-nav a:hover {
+            color: var(--teal);
+        }
+        .product-card {
+            background: white;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .product-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            border-color: var(--teal);
+        }
+
+        /* Image Swap Container */
+        .image-swap-container {
+            position: relative;
+            width: 100%;
+            height: 250px;
+            overflow: hidden;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .image-swap-container .img-front,
+        .image-swap-container .img-back {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .image-swap-container .img-front {
+            opacity: 1;
+            z-index: 1;
+        }
+
+        .image-swap-container .img-back {
+            opacity: 0;
+            z-index: 2;
+        }
+
+        .product-card:hover .image-swap-container .img-front {
+            opacity: 0;
+        }
+
+        .product-card:hover .image-swap-container .img-back {
+            opacity: 1;
+        }
+
+        /* Hover Overlay */
+        .hover-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.6);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 3;
+        }
+
+        .product-card:hover .hover-overlay {
+            opacity: 1;
+        }
+
+        .badge-view {
+            background: var(--teal);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(64, 224, 208, 0.4);
+            transform: translateY(10px);
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover .badge-view {
+            transform: translateY(0);
+        }
+
+        /* Backward compatibility for products without image swap */
+        .product-card img:not(.img-front):not(.img-back) {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .product-card h5 {
+            font-family: 'Merriweather', serif;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--charcoal);
+            min-height: 48px;
+        }
+
+        .product-card .price {
+            color: var(--teal);
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .btn-add-cart {
+            background-color: var(--teal);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            width: 100%;
+            margin-top: 10px;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .btn-add-cart:hover {
+            background-color: var(--teal-dark);
+            transform: scale(1.02);
+        }
+        /* --- FOOTER / ПОДВАЛ --- */
+        .site-footer {
+            background-color: var(--charcoal);
+            color: #b0b0b0; /* Леко сив текст за мекота */
+            padding-top: 60px;
+            padding-bottom: 30px;
+            margin-top: 80px; /* Отстояние от съдържанието нагоре */
+            font-size: 14px;
+        }
+
+        .site-footer h5 {
+            color: white;
+            font-family: 'Merriweather', serif;
+            font-weight: 700;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        /* Малка чертичка под заглавията за стил */
+        .site-footer h5::after {
+            content: '';
+            display: block;
+            width: 40px;
+            height: 2px;
+            background-color: var(--teal);
+            margin-top: 10px;
+        }
+
+        .site-footer a {
+            color: #b0b0b0;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .site-footer a:hover {
+            color: var(--teal);
+            padding-left: 5px; /* Ефект на леко отместване при ховър */
+        }
+
+        .social-icons a {
+            display: inline-block;
+            width: 36px;
+            height: 36px;
+            background-color: rgba(255,255,255,0.1);
+            text-align: center;
+            line-height: 36px;
+            border-radius: 50%;
+            margin-right: 10px;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .social-icons a:hover {
+            background-color: var(--teal);
+            transform: translateY(-3px);
+            color: white;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 25px;
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        footer {
+            background-color: var(--charcoal);
+            margin-top: 60px;
+        }
+    </style>
+    {% block stylesheets %}{% endblock %}
+
+</head>
+<body>
+<header>
+    <div class="header-top">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-2">
+                    <a href="/" class="logo">
+                        <i class="fas fa-heart"></i>
+                        <span>Bellamie</span>
+                    </a>
+                </div>
+                <div class="col-md-7 search-container mx-auto">
+                    <input type="text" id="search-input" class="form-control" placeholder="Търсете ръчно изработени продукти...">
+                </div>
+                <div class="col-md-3 text-end header-icons d-flex align-items-center justify-content-end gap-4">
+
+                    {# 1. ЛОГИКА ЗА ПОТРЕБИТЕЛЯ #}
+                    {% if app.user %}
+                        {# Ако е логнат: Зелено човече + Линк за изход #}
+                        <a href="{{ path('app_logout') }}" title="Изход ({{ app.user.email }})" class="text-dark position-relative">
+                            <i class="fas fa-user-check fa-lg text-success"></i>
+                        </a>
+                    {% else %}
+                        {# Ако НЕ е логнат: Обикновено човече + Линк за вход #}
+                        <a href="{{ path('app_login') }}" title="Вход" class="text-dark">
+                            <i class="fas fa-user fa-lg"></i>
+                        </a>
+                    {% endif %}
+
+                    {# 2. БРОЯЧ ЗА ЛЮБИМИ (WISHLIST) #}
+                    <a href="{{ path('app_wishlist') }}" title="Любими" class="text-dark position-relative">
+                        <i class="fas fa-heart fa-lg"></i>
+                        {# Показваме брояча само ако потребителят е логнат и има любими #}
+                        {% if app.user and app.user.favorites|length > 0 %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem; border: 2px solid white;">
+                {{ app.user.favorites|length }}
+            </span>
+                        {% endif %}
+                    </a>
+
+                    {# 3. БРОЯЧ ЗА КОЛИЧКА (CART) #}
+                    {# Изчисляваме общата бройка от сесията директно тук #}
+                    {% set cartCount = 0 %}
+                    {% set cart = app.session.get('cart', []) %}
+                    {% for quantity in cart %}
+                        {% set cartCount = cartCount + quantity %}
+                    {% endfor %}
+
+                    <a href="/cart" title="Количка" class="text-dark position-relative">
+                        <i class="fas fa-shopping-cart fa-lg"></i>
+                        {# Показваме значката само ако има нещо в количката #}
+                        {% if cartCount > 0 %}
+                            <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success" style="font-size: 0.65rem; border: 2px solid white;">
+                {{ cartCount }}
+            </span>
+                        {% else %}
+                            <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary" style="font-size: 0.65rem; border: 2px solid white; opacity: 0.7;">
+                0
+            </span>
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="banner-message">
+        Уникални, ръчно изработени творения за вас и вашия дом
+    </div>
+
+    <div class="categories-nav">
+        <div class="container ">
+            {# Тук викаме нашата нова функция от CategoryController #}
+            {{ render(controller('App\\Controller\\CategoryController::getMenu')) }}
+        </div>
+    </div>
+</header>
+
+<main class="container my-5">
+    {% block body %}{% endblock %}
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <div class="row gy-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="footer-info">
+                    <a href="/" class="logo mb-3" style="color: white; text-decoration: none;">
+                        <i class="fas fa-heart text-teal"></i>
+                        <span style="font-family: 'Merriweather', serif; font-weight: 700; font-size: 24px;">Bellamie</span>
+                    </a>
+                    <p class="mt-3" style="line-height: 1.8;">Ние създаваме уникални, ръчно изработени продукти с внимание към всеки детайл. Нашата мисия е да донесем уют и красота във вашия дом.</p>
+                    <div class="social-icons mt-4">
+                        <a href="https://www.facebook.com/profile.php?id=100091866307114" target="_blank" title="Последвайте ни във Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" target="_blank"><i class="fab fa-instagram"></i></a>
+                        <a href="#" target="_blank"><i class="fab fa-tiktok"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-2 col-md-6 ps-lg-5">
+                <h5>Магазин</h5>
+                <ul class="list-unstyled">
+                    <li><a href="/"><i class="fas fa-chevron-right small me-2"></i>Начало</a></li>
+                    <li><a href="#"><i class="fas fa-chevron-right small me-2"></i>Всички продукти</a></li>
+                    <li><a href="#"><i class="fas fa-chevron-right small me-2"></i>Нови предложения</a></li>
+                    <li><a href="#"><i class="fas fa-chevron-right small me-2"></i>Промоции</a></li>
+                </ul>
+            </div>
+
+            <div class="col-lg-2 col-md-6">
+                <h5>Помощ</h5>
+                <ul class="list-unstyled">
+                    <li><a href="#"><i class="fas fa-chevron-right small me-2"></i>Доставка и плащане</a></li>
+                    <li><a href="#"><i class="fas fa-chevron-right small me-2"></i>Връщане на стока</a></li>
+                    <li><a href="#"><i class="fas fa-chevron-right small me-2"></i>Чести въпроси</a></li>
+                    <li><a href="#"><i class="fas fa-chevron-right small me-2"></i>Контакти</a></li>
+                </ul>
+            </div>
+
+            <div class="col-lg-4 col-md-6">
+                <h5>Свържете се с нас</h5>
+                <div class="contact-item mb-3">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-user-circle me-3" style="color: var(--teal); font-size: 1.2rem;"></i>
+                        <span style="color: white; font-weight: 600;">Николина Давидова</span>
+                    </div>
+                </div>
+                <div class="contact-item mb-2">
+                    <p><i class="fas fa-map-marker-alt me-3" style="color: var(--teal);"></i> гр. Плевен</p>
+                </div>
+                <div class="contact-item mb-2">
+                    <p><a href="tel:0877017733" style="display: inline; padding: 0; color: inherit;"><i class="fas fa-phone me-3" style="color: var(--teal);"></i> 0877 01 77 33</a></p>
+                </div>
+                <div class="contact-item">
+                    <p><i class="fas fa-clock me-3" style="color: var(--teal);"></i> Пон - Пет: 09:00 - 18:00</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-md-start">
+                    <p class="mb-0">&copy; {{ "now"|date("Y") }} Bellamie Shop. Всички права запазени.</p>
+                </div>
+                <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" height="20" class="me-3" style="filter: grayscale(1) brightness(2);" alt="Visa">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" height="20" style="filter: grayscale(1) brightness(2);" alt="Mastercard">
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('search-input');
+        const productGrid = document.getElementById('product-grid');
+        const cartCountElement = document.getElementById('cart-count');
+
+        function loadProducts(searchTerm = '') {
+            const url = '/api/products' + (searchTerm ? '?q=' + encodeURIComponent(searchTerm) : '');
+
+            fetch(url)
+                .then(response => response.json())
+                .then(products => {
+                    if (!productGrid) return;
+                    productGrid.innerHTML = '';
+
+                    if (products.length === 0) {
+                        productGrid.innerHTML = '<div class="col-12 text-center py-5"><p class="text-muted">Не са намерени продукти.</p></div>';
+                        return;
+                    }
+
+                    products.forEach(product => {
+                        // Проверка за състоянието на любими
+                        const btnClass = product.isFavorite ? 'btn-danger' : 'btn-outline-danger';
+                        const iconClass = product.isFavorite ? 'fas' : 'far';
+
+                        const col = document.createElement('div');
+                        col.className = 'col-6 col-md-4 col-lg-3 mb-4';
+                        col.innerHTML = `
+                        <div class="product-card h-100 shadow-sm border-0 bg-white d-flex flex-column">
+                            <a href="/product/${product.id}" style="text-decoration: none; color: inherit;">
+                                <div class="image-swap-container">
+                                    <img src="${product.image}" class="img-front" alt="${product.name}">
+                                    <img src="${product.hoverImage}" class="img-back" alt="${product.name}">
+                                    <div class="hover-overlay">
+                                        <span class="badge-view">РАЗГЛЕДАЙ</span>
+                                    </div>
+                                </div>
+                                <div class="p-3 pb-0 text-center">
+                                    <h6 class="fw-bold text-truncate mb-1">${product.name}</h6>
+                                    <div class="text-primary fw-bold">${product.price} евро</div>
+                                </div>
+                            </a>
+                            <div class="p-3 mt-auto d-flex gap-2">
+                                <button class="btn btn-dark flex-grow-1 rounded-pill btn-sm" onclick="addToCart(${product.id})">
+                                    <i class="fas fa-shopping-cart"></i> Добави
+                                </button>
+                                <button class="btn ${btnClass} rounded-circle btn-sm"
+                                        style="width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center;"
+                                        onclick="toggleWishlist(this, ${product.id})">
+                                    <i class="${iconClass} fa-heart"></i>
+                                </button>
+                            </div>
+                        </div>`;
+                        productGrid.appendChild(col);
+                    });
+                })
+                .catch(error => console.error('Error loading products:', error));
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function() { loadProducts(this.value); });
+            loadProducts();
+        }
+    });
+
+    // Функцията toggleWishlist остава същата, както я пренаписахме по-горе
+    function toggleWishlist(btn, productId) {
+        if (btn.classList.contains('disabled')) return;
+        btn.classList.add('disabled');
+
+        fetch('/wishlist/toggle/' + productId, { method: 'POST' })
+            .then(res => {
+                if (res.status === 401) { window.location.href = '/login'; throw new Error(); }
+                return res.json();
+            })
+            .then(data => {
+                const icon = btn.querySelector('i');
+                if (data.status === 'added') {
+                    btn.classList.replace('btn-outline-danger', 'btn-danger');
+                    icon.classList.replace('far', 'fas');
+                } else {
+                    btn.classList.replace('btn-danger', 'btn-outline-danger');
+                    icon.classList.replace('fas', 'far');
+                    if (window.location.pathname.includes('/wishlist')) window.location.reload();
+                }
+            })
+            .finally(() => btn.classList.remove('disabled'));
+    }
+</script>
+{% block javascripts %}{% endblock %}
+
+</body>
+
+</html>

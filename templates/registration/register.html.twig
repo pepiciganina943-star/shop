@@ -1,0 +1,32 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Регистрация - Bellamie{% endblock %}
+
+{% block body %}
+    <div class="auth-container">
+        <h1 class="auth-title">Регистрация</h1>
+
+        {# Показване на грешки #}
+        {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        {# ЧИСТА ФОРМА БЕЗ RECAPTCHA #}
+        <form method="post">
+            {# Запазваме само CSRF токена за сигурност на Symfony #}
+            <input type="hidden" name="_token" value="{{ csrf_token('register_process') }}">
+
+            <div class="mb-3">
+                <label class="form-label">Имейл</label>
+                <input type="email" name="email" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Парола</label>
+                <input type="password" name="password" class="form-control" required>
+            </div>
+
+            <button class="btn btn-primary" type="submit">Регистрация</button>
+        </form>
+    </div>
+{% endblock %}

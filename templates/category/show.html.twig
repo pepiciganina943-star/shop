@@ -1,0 +1,253 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ category.name }} - Bellamie{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* --- СТИЛОВЕ ЗА ФИЛТРИТЕ И БУТОНА --- */
+        .filter-group {
+            margin-bottom: 25px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+        .filter-group:last-child { border-bottom: none; }
+
+        .filter-title {
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--charcoal);
+            font-family: 'Merriweather', serif;
+        }
+
+        /* Красивият зелен бутон */
+        .btn-filter-apply {
+            background-color: #20c997;
+            color: white;
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 50px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-top: 10px;
+        }
+        .btn-filter-apply:hover {
+            background-color: #198754;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            color: white;
+        }
+
+        /* Image Swap */
+        .image-swap-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px 12px 0 0;
+            aspect-ratio: 1/1;
+        }
+        .image-swap-container img {
+            transition: all 0.5s ease;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .img-front { position: absolute; top: 0; left: 0; z-index: 2; opacity: 1; }
+        .img-back { position: absolute; top: 0; left: 0; z-index: 1; opacity: 0; transform: scale(1.1); }
+        .product-card:hover .img-front { opacity: 0; }
+        .product-card:hover .img-back { opacity: 1; transform: scale(1); }
+
+        .hover-overlay {
+            position: absolute; bottom: 0; left: 0; width: 100%; padding: 10px;
+            text-align: center; z-index: 3; opacity: 0; transition: opacity 0.3s;
+            background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
+        }
+        .product-card:hover .hover-overlay { opacity: 1; }
+
+        .badge-view {
+            background: rgba(255, 255, 255, 0.9); color: var(--charcoal);
+            padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase;
+        }
+
+        /* Стил за бутона Любими */
+        .btn-wishlist-step {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            padding: 0;
+        }
+
+        .offcanvas-lg { --bs-offcanvas-width: 300px; }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container py-4 py-lg-5">
+
+        {# Заглавие #}
+        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+            <div>
+                <h1 class="fw-bold display-6 mb-0" style="font-family: 'Merriweather', serif;">{{ category.name }}</h1>
+                <p class="text-muted small mb-0 mt-1">Разгледайте нашите уникални предложения</p>
+            </div>
+            <span class="badge bg-light text-dark border rounded-pill">{{ products|length }} продукта</span>
+        </div>
+
+        {# Мобилен бутон #}
+        <div class="d-lg-none mb-4">
+            <button class="btn btn-dark w-100 rounded-pill py-2 shadow-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#filterSidebar">
+                <i class="fas fa-sliders-h me-2"></i> Филтри
+            </button>
+        </div>
+
+        <div class="row">
+
+            {# === ЛЯВА КОЛОНА: ФИЛТРИ === #}
+            <div class="col-lg-3 mb-4">
+                <div class="offcanvas-lg offcanvas-start" tabindex="-1" id="filterSidebar">
+                    <div class="offcanvas-header border-bottom">
+                        <h5 class="offcanvas-title fw-bold">Филтри</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#filterSidebar"></button>
+                    </div>
+
+                    <div class="offcanvas-body p-0 p-lg-0">
+                        <div class="filter-sidebar sticky-top" style="top: 20px;">
+
+                            {# 1. КАТЕГОРИИ (Списък) #}
+                            <div class="filter-group">
+                                <div class="filter-title">Категории</div>
+                                <div class="list-group list-group-flush">
+                                    {% for cat in allCategories %}
+                                        <a href="{{ path('app_category_show', {id: cat.id}) }}"
+                                           class="list-group-item list-group-item-action border-0 px-0 py-2 {{ cat.id == category.id ? 'fw-bold text-teal' : 'text-muted' }}">
+                                            <i class="fas fa-angle-right me-2 small"></i> {{ cat.name }}
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            {# ФОРМА ЗА ФИЛТРИТЕ #}
+                            <form method="GET">
+                                {# 2. ЦЕНА #}
+                                <div class="filter-group">
+                                    <div class="filter-title">Цена (лв)</div>
+                                    <div class="d-flex gap-2 align-items-center">
+                                        <input type="number" name="min_price" class="form-control form-control-sm" placeholder="От" value="{{ app.request.query.get('min_price') }}">
+                                        <span class="text-muted">-</span>
+                                        <input type="number" name="max_price" class="form-control form-control-sm" placeholder="До" value="{{ app.request.query.get('max_price') }}">
+                                    </div>
+                                </div>
+
+                                {# 3. СОРТИРАНЕ #}
+                                <div class="filter-group">
+                                    <div class="filter-title">Подреди</div>
+                                    <select name="sort" class="form-select form-select-sm shadow-none">
+                                        {% set currentSort = app.request.query.get('sort') %}
+                                        <option value="newest" {{ currentSort == 'newest' ? 'selected' : '' }}>Най-нови</option>
+                                        <option value="price_asc" {{ currentSort == 'price_asc' ? 'selected' : '' }}>Цена: Ниска &rarr; Висока</option>
+                                        <option value="price_desc" {{ currentSort == 'price_desc' ? 'selected' : '' }}>Цена: Висока &rarr; Ниска</option>
+                                    </select>
+                                </div>
+
+                                {# 4. НАЛИЧНОСТ #}
+                                <div class="filter-group border-0">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="in_stock" value="1" id="inStock" {{ app.request.query.get('in_stock') ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="inStock">Само налични</label>
+                                    </div>
+                                </div>
+
+                                {# БУТОН ПРИЛОЖИ #}
+                                <button type="submit" class="btn btn-filter-apply shadow-sm">
+                                    <i class="fas fa-check me-2"></i> ПРИЛОЖИ
+                                </button>
+
+                                {# Линк за изчистване #}
+                                {% if app.request.query.all|length > 0 %}
+                                    <div class="text-center mt-3">
+                                        <a href="{{ path('app_category_show', {id: category.id}) }}" class="text-muted small text-decoration-none">
+                                            <i class="fas fa-times me-1"></i> Изчисти филтрите
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# === ДЯСНА КОЛОНА: ПРОДУКТИ === #}
+            <div class="col-lg-9">
+                <div class="row g-3 g-lg-4">
+                    {% for product in products %}
+                        <div class="col-6 col-md-4">
+                            <div class="product-card h-100 shadow-sm border-0 bg-white d-flex flex-column">
+                                <a href="{{ path('app_product_show', {id: product.id}) }}" class="text-decoration-none text-dark">
+                                    <div class="image-swap-container">
+                                        {% set images = product.images %}
+                                        {% if images|length > 0 %}
+                                            {# Логика за първата снимка #}
+                                            {% set imgPath1 = images[0].filename starts with 'http' ? images[0].filename : asset('uploads/products/' ~ images[0].filename) %}
+                                            <img src="{{ imgPath1 }}" class="img-front" alt="{{ product.name }}">
+
+                                            {% if images|length > 1 %}
+                                                {# Логика за втората снимка #}
+                                                {% set imgPath2 = images[1].filename starts with 'http' ? images[1].filename : asset('uploads/products/' ~ images[1].filename) %}
+                                                <img src="{{ imgPath2 }}" class="img-back" alt="{{ product.name }}">
+                                            {% else %}
+                                                {# Ако няма втора, повтаряме първата за ефекта #}
+                                                <img src="{{ imgPath1 }}" class="img-back" alt="{{ product.name }}">
+                                            {% endif %}
+                                        {% else %}
+                                            <div class="d-flex align-items-center justify-content-center h-100 bg-light text-muted">Няма снимка</div>
+                                        {% endif %}
+                                        <div class="hover-overlay"><span class="badge-view">РАЗГЛЕДАЙ</span></div>
+                                    </div>
+                                    <div class="p-3 pb-0">
+                                        <h6 class="fw-bold text-truncate mb-1">{{ product.name }}</h6>
+                                        <div class="text-primary fw-bold mb-2">{{ product.price }} лв</div>
+                                    </div>
+                                </a>
+
+                                {# СЕКЦИЯ БУТОНИ #}
+                                <div class="p-3 mt-auto d-flex gap-2">
+                                    {# Бутон Добави #}
+                                    <a href="{{ path('app_cart_add', { id: product.id }) }}" class="btn btn-sm btn-outline-dark flex-grow-1 rounded-pill">
+                                        <i class="fas fa-shopping-cart"></i> Купи
+                                    </a>
+
+                                    {# Бутон Любими #}
+                                    {% set isFavorite = false %}
+                                    {% if app.user %}
+                                        {% if product in app.user.favorites %}
+                                            {% set isFavorite = true %}
+                                        {% endif %}
+                                    {% endif %}
+
+                                    <button class="btn btn-sm {{ isFavorite ? 'btn-danger' : 'btn-outline-danger' }} rounded-circle btn-wishlist-step"
+                                            onclick="toggleWishlist(this, {{ product.id }})">
+                                        <i class="{{ isFavorite ? 'fas' : 'far' }} fa-heart"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="col-12 text-center py-5">
+                            <div class="p-5 bg-light rounded-3">
+                                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                                <h3 class="text-muted">Няма намерени продукти в тази селекция.</h3>
+                                <a href="{{ path('app_category_show', {id: category.id}) }}" class="btn btn-outline-dark mt-3 rounded-pill">Върни всички продукти</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

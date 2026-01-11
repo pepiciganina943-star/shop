@@ -1,0 +1,11 @@
+{# templates/partials/menu.html.twig #}
+{% for category in categories %}
+    {# Добавихме 'me-4' за разстояние вдясно #}
+    <li class="nav-item me-4">
+        <a class="nav-link fw-bold text-uppercase"
+           href="{{ path('app_category_show', {id: category.id}) }}"
+           style="color: var(--charcoal); font-size: 0.9rem; letter-spacing: 1px;">
+            {{ category.name }}
+        </a>
+    </li>
+{% endfor %}

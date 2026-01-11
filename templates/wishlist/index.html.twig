@@ -1,0 +1,86 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Моите Любими{% endblock %}
+
+{% block body %}
+    <div class="container py-5">
+
+        {# ЗАГЛАВИЕ И БРОЯЧ #}
+        <div class="d-flex align-items-center mb-4">
+            <h1 class="fw-bold mb-0 me-3" style="font-family: 'Merriweather', serif;">
+                <i class="fas fa-heart text-danger me-2"></i>Моите Любими
+            </h1>
+            {# ПРОМЯНА ТУК: Взимаме бройката директно от потребителя #}
+            <span class="badge bg-success rounded-pill px-3 py-2">
+                {{ app.user.favorites|length }} артикула
+            </span>
+        </div>
+
+        {# СПИСЪК С ПРОДУКТИ #}
+        <div class="row g-4">
+            {# ПРОМЯНА ТУК: Въртим цикъла през app.user.favorites #}
+            {% for product in app.user.favorites %}
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="product-card h-100 shadow-sm border-0 bg-white rounded position-relative">
+
+                        {# СНИМКИ (ПОПРАВЕНИ) #}
+                        <div class="wishlist-img-container position-relative overflow-hidden rounded-top" style="aspect-ratio: 1/1;">
+                            <a href="{{ path('app_product_show', {id: product.id}) }}" class="d-block w-100 h-100">
+                                {% set images = product.images %}
+                                {% if images|length > 0 %}
+                                    {# Логика за първата снимка #}
+                                    {% set imgPath1 = images[0].filename starts with 'http' ? images[0].filename : asset('uploads/products/' ~ images[0].filename) %}
+                                    <img src="{{ imgPath1 }}" class="img-front w-100 h-100 object-fit-cover position-absolute top-0 start-0" alt="{{ product.name }}">
+
+                                    {% if images|length > 1 %}
+                                        {# Логика за втората снимка #}
+                                        {% set imgPath2 = images[1].filename starts with 'http' ? images[1].filename : asset('uploads/products/' ~ images[1].filename) %}
+                                        <img src="{{ imgPath2 }}" class="img-back w-100 h-100 object-fit-cover position-absolute top-0 start-0" alt="{{ product.name }}">
+                                    {% else %}
+                                        {# Ако няма втора, повтаряме първата #}
+                                        <img src="{{ imgPath1 }}" class="img-back w-100 h-100 object-fit-cover position-absolute top-0 start-0" alt="{{ product.name }}">
+                                    {% endif %}
+                                {% else %}
+                                    <div class="d-flex align-items-center justify-content-center h-100 bg-light text-muted">Няма снимка</div>
+                                {% endif %}
+                            </a>
+
+                            {# БУТОН ЗА ПРЕМАХВАНЕ (Увери се, че пътят съществува, иначе го махни) #}
+                            {# <a href="{{ path('app_wishlist_remove', {id: product.id}) }}"
+                               class="btn btn-sm btn-light rounded-circle position-absolute top-0 end-0 m-2 shadow-sm text-danger"
+                               title="Премахни">
+                                <i class="fas fa-times"></i>
+                            </a> #}
+                        </div>
+
+                        {# ИНФОРМАЦИЯ ЗА ПРОДУКТА #}
+                        <div class="p-3 text-center">
+                            <h6 class="fw-bold text-dark text-truncate mb-1">{{ product.name }}</h6>
+                            <div class="text-success fw-bold mb-2">{{ product.price }} лв</div>
+
+                            <a href="{{ path('app_cart_add', { id: product.id }) }}" class="btn btn-outline-dark btn-sm rounded-pill w-100">
+                                <i class="fas fa-shopping-cart me-1"></i> Купи
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+            {% else %}
+                <div class="col-12 text-center py-5">
+                    <div class="text-muted">
+                        <i class="far fa-heart fa-3x mb-3"></i>
+                        <h4>Все още нямате любими продукти.</h4>
+                        <a href="{{ path('app_home') }}" class="btn btn-primary mt-3 rounded-pill">Разгледай продукти</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <style>
+        .wishlist-img-container .img-front { z-index: 2; opacity: 1; transition: opacity 0.4s ease; }
+        .wishlist-img-container .img-back { z-index: 1; opacity: 0; }
+        .wishlist-img-container:hover .img-front { opacity: 0; }
+        .wishlist-img-container:hover .img-back { opacity: 1; }
+    </style>
+{% endblock %}

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Потвърждение на поръчка</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f5f2;
+            margin: 0;
+            padding: 0;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #40E0D0 0%, #5ee3d2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+        .header p {
+            margin: 10px 0 0;
+            font-size: 16px;
+            opacity: 0.95;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .greeting {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .order-info {
+            background: #f8f5f2;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .order-info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e8e3de;
+        }
+        .order-info-row:last-child {
+            border-bottom: none;
+        }
+        .label {
+            font-weight: 600;
+            color: #666;
+        }
+        .value {
+            color: #333;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0;
+        }
+        .items-table thead {
+            background: #40E0D0;
+            color: white;
+        }
+        .items-table th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .items-table td {
+            padding: 15px 12px;
+            border-bottom: 1px solid #e8e3de;
+        }
+        .items-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .total-row {
+            background: #f8f5f2;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        .total-row td {
+            padding: 20px 12px !important;
+        }
+        .footer {
+            background: #333;
+            color: white;
+            padding: 30px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #40E0D0;
+            text-decoration: none;
+        }
+        .button {
+            display: inline-block;
+            background: #40E0D0;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>❤️ Bellamie</h1>
+            <p>Ръчно изработени творения</p>
+        </div>
+
+        <div class="content">
+            <p class="greeting">Здравейте, {{ order.user.email }}!</p>
+
+            <p><strong>Благодарим Ви за Вашата поръчка!</strong></p>
+            <p>Получихме Вашето запитване и ще се свържем с Вас скоро за потвърждение. Вашата поръчка е в състояние <strong>"Чакаща одобрение"</strong> и ще бъде обработена след нашето потвърждение.</p>
+
+            <div class="order-info">
+                <div class="order-info-row">
+                    <span class="label">Номер на поръчка:</span>
+                    <span class="value">#{{ order.id }}</span>
+                </div>
+                <div class="order-info-row">
+                    <span class="label">Дата:</span>
+                    <span class="value">{{ order.createdAt|date('d.m.Y H:i') }}</span>
+                </div>
+                <div class="order-info-row">
+                    <span class="label">Статус:</span>
+                    <span class="value">{{ order.status }}</span>
+                </div>
+            </div>
+
+            <h2 style="color: #333; margin-top: 30px;">Данни за доставка:</h2>
+
+            <div class="order-info">
+                <div class="order-info-row">
+                    <span class="label">Име:</span>
+                    <span class="value">{{ customerData.fullName }}</span>
+                </div>
+                <div class="order-info-row">
+                    <span class="label">Телефон:</span>
+                    <span class="value">{{ customerData.phone }}</span>
+                </div>
+                <div class="order-info-row">
+                    <span class="label">Адрес:</span>
+                    <span class="value">{{ customerData.address }}</span>
+                </div>
+            </div>
+
+            <h2 style="color: #333; margin-top: 30px;">Детайли на поръчката:</h2>
+
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Продукт</th>
+                        <th style="text-align: center;">Количество</th>
+                        <th style="text-align: right;">Цена</th>
+                        <th style="text-align: right;">Сума</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items %}
+                    <tr>
+                        <td>{{ item.product.name }}</td>
+                        <td style="text-align: center;">{{ item.quantity }}</td>
+                        <td style="text-align: right;">{{ item.price }} лв</td>
+                        <td style="text-align: right;">{{ item.subtotal|number_format(2, '.', '') }} лв</td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="total-row">
+                        <td colspan="3" style="text-align: right;">ОБЩО:</td>
+                        <td style="text-align: right;">{{ order.totalPrice }} лв</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p><strong>Важно:</strong> Това е автоматично потвърждение за получаване на заявката. След като разгледаме Вашата поръчка, ще получите допълнително съобщение за одобрение и следващите стъпки.</p>
+
+            <center>
+                <a href="http://localhost/" class="button">Посетете нашия магазин</a>
+            </center>
+        </div>
+
+        <div class="footer">
+            <p>&copy; {{ "now"|date("Y") }} Bellamie - Ръчно изработени творения</p>
+            <p>
+                <a href="http://localhost/">Начало</a> |
+                <a href="mailto:asem4o@gmail.com">Контакти</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

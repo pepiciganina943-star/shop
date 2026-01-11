@@ -1,0 +1,260 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Успешна поръчка - Bellamie{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .success-container {
+            max-width: 800px;
+            margin: 60px auto;
+            text-align: center;
+        }
+
+        .success-icon {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            box-shadow: 0 8px 30px rgba(40, 167, 69, 0.3);
+            animation: successPulse 1.5s ease infinite;
+        }
+
+        @keyframes successPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .success-icon i {
+            font-size: 60px;
+            color: white;
+        }
+
+        .success-title {
+            font-size: 36px;
+            font-weight: 700;
+            color: #28a745;
+            margin-bottom: 15px;
+            font-family: 'Merriweather', serif;
+        }
+
+        .success-message {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .order-summary {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin: 40px 0;
+            text-align: left;
+        }
+
+        .order-summary h3 {
+            color: var(--teal);
+            font-family: 'Merriweather', serif;
+            margin-bottom: 20px;
+        }
+
+        .order-info {
+            background: #f8f5f2;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .order-info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e8e3de;
+        }
+
+        .order-info-row:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .items-list {
+            margin-top: 20px;
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #e8e3de;
+        }
+
+        .item-row:last-child {
+            border-bottom: 2px solid var(--teal);
+        }
+
+        .item-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .item-details {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px 0 0;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--teal);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 40px;
+        }
+
+        .btn-primary-custom {
+            background: var(--teal);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            font-size: 16px;
+        }
+
+        .btn-primary-custom:hover {
+            background: var(--teal-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(64, 224, 208, 0.4);
+        }
+
+        .btn-secondary-custom {
+            background: white;
+            color: var(--teal);
+            padding: 15px 40px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: 2px solid var(--teal);
+            font-size: 16px;
+        }
+
+        .btn-secondary-custom:hover {
+            background: var(--teal);
+            color: white;
+        }
+
+        .email-notice {
+            background: #d1ecf1;
+            border-left: 4px solid #0c5460;
+            padding: 15px 20px;
+            border-radius: 6px;
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .email-notice i {
+            color: #0c5460;
+            margin-right: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="success-container">
+        <div class="success-icon">
+            <i class="fas fa-check"></i>
+        </div>
+
+        <h1 class="success-title">Поръчката е приета успешно!</h1>
+        <p class="success-message">
+            Благодарим Ви за покупката! Вашата поръчка беше успешно обработена.<br>
+            Ще получите потвърждение на имейл адреса си скоро.
+        </p>
+
+        <div class="order-summary">
+            <h3><i class="fas fa-receipt"></i> Детайли на поръчката</h3>
+
+            <div class="order-info">
+                <div class="order-info-row">
+                    <span class="label">Номер на поръчка:</span>
+                    <span class="value">#{{ order.id }}</span>
+                </div>
+                <div class="order-info-row">
+                    <span class="label">Дата:</span>
+                    <span class="value">{{ order.createdAt|date('d.m.Y H:i') }}</span>
+                </div>
+                <div class="order-info-row">
+                    <span class="label">Статус:</span>
+                    <span class="value">
+                        <span class="badge bg-warning text-dark">{{ order.status }}</span>
+                    </span>
+                </div>
+                <div class="order-info-row">
+                    <span class="label">Имейл:</span>
+                    <span class="value">{{ order.user.email }}</span>
+                </div>
+            </div>
+
+            <h4 style="margin-top: 30px; color: #333;">Поръчани продукти:</h4>
+
+            <div class="items-list">
+                {% for item in order.items %}
+                <div class="item-row">
+                    <div>
+                        <div class="item-name">{{ item.product.name }}</div>
+                        <div class="item-details">{{ item.quantity }} x {{ item.price }} лв</div>
+                    </div>
+                    <div class="item-name">{{ item.subtotal|number_format(2, '.', '') }} лв</div>
+                </div>
+                {% endfor %}
+
+                <div class="total-row">
+                    <span>ОБЩА СУМА:</span>
+                    <span>{{ order.totalPrice }} лв</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="email-notice">
+            <i class="fas fa-envelope"></i>
+            <strong>Проверете имейла си!</strong> Изпратихме Ви потвърждение с всички детайли на поръчката.
+            Ще се свържем с Вас скоро за потвърждение и доставка.
+        </div>
+
+        <div class="action-buttons">
+            <a href="{{ path('app_home') }}" class="btn-primary-custom">
+                <i class="fas fa-shopping-bag"></i> Продължи пазаруването
+            </a>
+            <a href="{{ path('app_home') }}" class="btn-secondary-custom">
+                <i class="fas fa-home"></i> Начална страница
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

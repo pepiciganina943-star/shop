@@ -1,0 +1,210 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Начало - Bellamie{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* --- СТИЛОВЕ --- */
+        .image-swap-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px 12px 0 0;
+            aspect-ratio: 1/1;
+        }
+        .image-swap-container img {
+            transition: all 0.5s ease; width: 100%; height: 100%; object-fit: cover;
+        }
+        .img-front { position: absolute; top: 0; left: 0; z-index: 2; opacity: 1; }
+        .img-back { position: absolute; top: 0; left: 0; z-index: 1; opacity: 0; transform: scale(1.1); }
+        .product-card:hover .img-front { opacity: 0; }
+        .product-card:hover .img-back { opacity: 1; transform: scale(1); }
+
+        .hover-overlay {
+            position: absolute; bottom: 0; left: 0; width: 100%; padding: 10px;
+            text-align: center; z-index: 3; opacity: 0; transition: opacity 0.3s;
+            background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
+        }
+        .product-card:hover .hover-overlay { opacity: 1; }
+
+        .badge-view {
+            background: rgba(255, 255, 255, 0.9); color: var(--charcoal);
+            padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase;
+        }
+
+        .filter-group { margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        .filter-group:last-child { border-bottom: none; }
+        .filter-title { font-weight: 700; margin-bottom: 10px; color: var(--charcoal); font-family: 'Merriweather', serif; }
+
+        #btn-apply-filters {
+            background-color: #20c997; color: white; width: 100%; padding: 12px;
+            border: none; border-radius: 50px; font-weight: bold; text-transform: uppercase;
+            letter-spacing: 1px; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            cursor: pointer; text-align: center; margin-top: 15px;
+        }
+        #btn-apply-filters:hover { background-color: #198754; transform: translateY(-2px); }
+
+        .offcanvas-lg { --bs-offcanvas-width: 300px; }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="text-center py-4 mb-4 bg-white border-bottom">
+        <h1 class="display-6 fw-bold" style="font-family: 'Merriweather', serif; color: var(--charcoal);">Bellamie</h1>
+        <p class="text-muted small mb-0">Ръчно изработени с любов</p>
+    </div>
+
+    <div class="container d-lg-none mb-3">
+        <button class="btn btn-dark w-100 rounded-pill py-2 shadow-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#filterOffcanvas">
+            <i class="fas fa-sliders-h me-2"></i> Филтри и Категории
+        </button>
+    </div>
+
+    <div class="row">
+        {# ЛЯВА КОЛОНА (ФИЛТРИ) #}
+        <div class="col-lg-3 mb-5">
+            <div class="offcanvas-lg offcanvas-start" tabindex="-1" id="filterOffcanvas">
+                <div class="offcanvas-header border-bottom">
+                    <h5 class="offcanvas-title fw-bold">Филтри</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#filterOffcanvas"></button>
+                </div>
+                <div class="offcanvas-body p-0 p-lg-0">
+                    <div class="filter-sidebar sticky-top" style="top: 20px;">
+                        <h5 class="mb-4 fw-bold d-none d-lg-block" style="font-family: 'Merriweather', serif;">Филтрирай</h5>
+
+                        <div class="filter-group">
+                            <div class="filter-title">Категория</div>
+                            <select id="category-filter" class="form-select form-select-sm mt-2 shadow-none">
+                                <option value="" selected>Всички</option>
+                                {% for cat in allCategories %}
+                                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <div class="filter-title">Цена (евро)</div>
+                            <div class="d-flex gap-2 align-items-center mt-2">
+                                <input type="number" id="min-price" class="form-control form-control-sm" placeholder="От">
+                                <span class="text-muted">-</span>
+                                <input type="number" id="max-price" class="form-control form-control-sm" placeholder="До">
+                            </div>
+                        </div>
+
+                        <div class="filter-group">
+                            <div class="filter-title">Подреди</div>
+                            <select id="sort-order" class="form-select form-select-sm mt-2 shadow-none">
+                                <option value="newest" selected>Най-нови</option>
+                                <option value="price_asc">Цена: Ниска &rarr; Висока</option>
+                                <option value="price_desc">Цена: Висока &rarr; Ниска</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group border-0">
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" value="" id="inStockOnly" checked>
+                                <label class="form-check-label" for="inStockOnly">Само налични</label>
+                            </div>
+                        </div>
+
+                        <button id="btn-apply-filters" type="button" data-bs-dismiss="offcanvas" data-bs-target="#filterOffcanvas">
+                            <i class="fas fa-check"></i> ПРИЛОЖИ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# ДЯСНА КОЛОНА (ПРОДУКТИ) #}
+        <div class="col-lg-9">
+            <div class="row g-3 g-lg-4" id="product-grid">
+                <div class="col-12 text-center py-5">
+                    <div class="spinner-border text-info" role="status"></div>
+                    <p class="mt-3 text-muted">Зареждане...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# JAVASCRIPT #}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const productGrid = document.getElementById('product-grid');
+            const btnApply = document.getElementById('btn-apply-filters');
+
+            function fetchProducts() {
+                const categoryId = document.getElementById('category-filter').value;
+                const minPrice = document.getElementById('min-price').value;
+                const maxPrice = document.getElementById('max-price').value;
+                const sortOrder = document.getElementById('sort-order').value;
+                const inStock = document.getElementById('inStockOnly').checked;
+
+                let url = '/api/products?sort=' + sortOrder;
+                if (categoryId) url += '&category_id=' + categoryId;
+                if (minPrice) url += '&min_price=' + minPrice;
+                if (maxPrice) url += '&max_price=' + maxPrice;
+                if (inStock) url += '&in_stock=true';
+
+                productGrid.style.opacity = '0.5';
+
+                fetch(url)
+                    .then(response => response.json())
+                    .then(products => {
+                        productGrid.style.opacity = '1';
+                        productGrid.innerHTML = '';
+
+                        if (products.length === 0) {
+                            productGrid.innerHTML = '<div class="col-12 text-center py-5"><h5 class="text-muted">Няма намерени продукти.</h5></div>';
+                            return;
+                        }
+
+                        products.forEach(product => {
+                            // ОПРЕДЕЛЯМЕ СТИЛА НА БУТОНА (Пълен или само контур)
+                            const btnClass = product.isFavorite ? 'btn-danger' : 'btn-outline-danger';
+                            const iconClass = product.isFavorite ? 'fas' : 'far';
+
+                            const col = document.createElement('div');
+                            col.className = 'col-6 col-md-4 col-lg-4';
+                            col.innerHTML = `
+                                <div class="product-card h-100 shadow-sm border-0 bg-white d-flex flex-column">
+                                    <a href="/product/${product.id}" class="text-decoration-none text-dark">
+                                        <div class="image-swap-container">
+                                            <img src="${product.image}" class="img-front" alt="${product.name}">
+                                            <img src="${product.hoverImage}" class="img-back" alt="${product.name}">
+                                            <div class="hover-overlay">
+                                                <span class="badge-view">РАЗГЛЕДАЙ</span>
+                                            </div>
+                                        </div>
+                                        <div class="p-3 pb-0">
+                                            <h6 class="fw-bold text-truncate mb-1" style="font-size: 0.95rem;">${product.name}</h6>
+                                            <div class="text-primary fw-bold">${product.price} евро</div>
+                                        </div>
+                                    </a>
+
+                                    <div class="p-3 mt-auto d-flex gap-2">
+                                        <a href="/cart/add/${product.id}" class="btn btn-sm btn-outline-dark flex-grow-1 rounded-pill">
+                                            <i class="fas fa-shopping-cart"></i> Добави
+                                        </a>
+
+                                        <button class="btn btn-sm ${btnClass} rounded-circle"
+                                                style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;"
+                                                onclick="toggleWishlist(this, ${product.id})">
+                                            <i class="${iconClass} fa-heart"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                            productGrid.appendChild(col);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        productGrid.innerHTML = '<div class="col-12 text-danger text-center">Грешка при зареждането.</div>';
+                    });
+            }
+
+            fetchProducts();
+            if (btnApply) btnApply.addEventListener('click', fetchProducts);
+        });
+    </script>
+{% endblock %}

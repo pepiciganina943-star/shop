@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /cart
+Disallow: /logout
+
+Sitemap: https://ridiculous-trula-testorganizaction-616532fe.koyeb.app/sitemap.xml

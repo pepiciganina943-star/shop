@@ -1,0 +1,126 @@
+# Production Dockerfile with Supervisor, Nginx, PHP-FPM, and Messenger Workers
+FROM php:8.3-fpm-alpine AS build
+
+# Install build dependencies
+RUN apk add --no-cache \
+    git \
+    unzip \
+    libzip-dev \
+    icu-dev \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install \
+    pdo \
+    pdo_mysql \
+    intl \
+    zip \
+    gd \
+    opcache
+
+# Install Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/symfony
+
+# Copy composer files
+COPY composer.json composer.lock symfony.lock ./
+
+# Install dependencies (no dev dependencies for production)
+RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interaction
+
+# Copy application code
+COPY . .
+
+# Run composer scripts
+RUN composer dump-autoload --optimize --classmap-authoritative
+
+# Set permissions
+RUN chown -R www-data:www-data /var/www/symfony/var
+
+# ====================================
+# Production Stage with Supervisor
+# ====================================
+FROM php:8.3-fpm-alpine AS production
+
+# Install runtime dependencies, supervisor, and nginx
+RUN apk add --no-cache \
+    icu-libs \
+    libzip \
+    libpng \
+    libjpeg-turbo \
+    freetype \
+    supervisor \
+    nginx \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install \
+    pdo \
+    pdo_mysql \
+    intl \
+    zip \
+    gd \
+    opcache
+
+# Configure OPcache for production
+RUN { \
+    echo 'opcache.enable=1'; \
+    echo 'opcache.memory_consumption=256'; \
+    echo 'opcache.interned_strings_buffer=16'; \
+    echo 'opcache.max_accelerated_files=20000'; \
+    echo 'opcache.validate_timestamps=0'; \
+    echo 'opcache.save_comments=1'; \
+    echo 'opcache.fast_shutdown=1'; \
+    } > /usr/local/etc/php/conf.d/opcache.ini
+
+# Configure PHP-FPM to listen on 127.0.0.1:9000
+RUN { \
+    echo '[www]'; \
+    echo 'listen = 127.0.0.1:9000'; \
+    echo 'pm = dynamic'; \
+    echo 'pm.max_children = 50'; \
+    echo 'pm.start_servers = 5'; \
+    echo 'pm.min_spare_servers = 5'; \
+    echo 'pm.max_spare_servers = 35'; \
+    echo 'pm.max_requests = 500'; \
+    echo 'clear_env = no'; \
+    } > /usr/local/etc/php-fpm.d/zz-custom.conf
+
+# Set PHP configuration
+RUN { \
+    echo 'memory_limit=256M'; \
+    echo 'upload_max_filesize=20M'; \
+    echo 'post_max_size=20M'; \
+    echo 'max_execution_time=30'; \
+    echo 'date.timezone=UTC'; \
+    echo 'expose_php=Off'; \
+    } > /usr/local/etc/php/conf.d/custom.ini
+
+WORKDIR /var/www/symfony
+
+# Copy from build stage
+COPY --from=build --chown=www-data:www-data /var/www/symfony /var/www/symfony
+
+# Copy configuration files
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+
+# Make entrypoint executable
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Create required directories
+RUN mkdir -p \
+    var/cache \
+    var/log \
+    public/uploads \
+    /var/log/supervisor \
+    /var/log/nginx \
+    /run/nginx \
+    && chown -R www-data:www-data var public/uploads /var/log/supervisor
+
+# Expose port 8080 (Koyeb compatible)
+EXPOSE 8080
+
+# Set entrypoint
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

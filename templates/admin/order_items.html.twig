@@ -1,0 +1,23 @@
+<div style="margin-top: 15px; background: #f8f9fa; padding: 15px; border-radius: 8px;">
+    <h4 style="color: #333; margin-bottom: 15px;">Order Items:</h4>
+    <table class="table table-bordered table-striped" style="background: white;">
+        <thead style="background: #343a40; color: white;">
+            <tr>
+                <th>Product</th>
+                <th style="text-align: center;">Price</th>
+                <th style="text-align: center;">Quantity</th>
+                <th style="text-align: right;">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in field.value %}
+                <tr>
+                    <td><strong>{{ item.product.name }}</strong></td>
+                    <td style="text-align: center;">{{ item.price }} лв</td>
+                    <td style="text-align: center;">{{ item.quantity }}</td>
+                    <td style="text-align: right;"><strong>{{ item.subtotal|number_format(2, '.', '') }} лв</strong></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
