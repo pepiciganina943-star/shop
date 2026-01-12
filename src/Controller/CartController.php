@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Repository\CategoryRepository;
 use App\Service\CartService;
 use App\Repository\ProductRepository; // <--- ВАЖНО: Добави това
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -136,6 +137,15 @@ class CartController extends AbstractController
             'success' => true,
             'newTotal' => $newTotal,
             'count' => $count
+        ]);
+    }
+    public function getMenu(CategoryRepository $categoryRepository): Response
+    {
+        // Взима всички категории от базата данни
+        $categories = $categoryRepository->findAll();
+
+        return $this->render('category/menu.html.twig', [
+            'categories' => $categories,
         ]);
     }
 }

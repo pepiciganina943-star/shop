@@ -442,8 +442,8 @@
     </div>
 
     <div class="categories-nav">
-        <div class="container ">
-            {# Тук викаме нашата нова функция от CategoryController #}
+        {# ПРОМЯНА: Сменихме 'center' на 'start', за да отиде вляво #}
+        <div class="container d-flex justify-content-start">
             {{ render(controller('App\\Controller\\CategoryController::getMenu')) }}
         </div>
     </div>
