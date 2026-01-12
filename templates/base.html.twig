@@ -369,7 +369,21 @@
                     </a>
                 </div>
                 <div class="col-md-7 search-container mx-auto">
-                    <input type="text" id="search-input" class="form-control" placeholder="Търсете ръчно изработени продукти...">
+                    {# ВАЖНО: Добавяме form таг, който сочи към пътя app_search #}
+                    <form action="{{ path('app_search') }}" method="get" class="d-flex">
+                        <input
+                                type="text"
+                                name="q"
+                                id="search-input"
+                                class="form-control"
+                                placeholder="Търсете ръчно изработени продукти..."
+                                value="{{ app.request.query.get('q') }}"
+                                required
+                        >
+                        <button type="submit" class="btn btn-primary ms-2">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
                 </div>
                 <div class="col-md-3 text-end header-icons d-flex align-items-center justify-content-end gap-4">
 
