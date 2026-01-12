@@ -5,12 +5,11 @@
 {% block stylesheets %}
     {{ parent() }}
     <style>
-        /* --- СТИЛОВЕ ЗА НАЧАЛНАТА СТРАНИЦА --- */
         .image-swap-container {
             position: relative;
             overflow: hidden;
             border-radius: 12px 12px 0 0;
-            aspect-ratio: 1/1; /* ВАЖНО ЗА CLS */
+            aspect-ratio: 1/1;
         }
         .image-swap-container img {
             transition: all 0.5s ease; width: 100%; height: 100%; object-fit: cover;
@@ -32,9 +31,10 @@
             padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase;
         }
 
+        /* Филтри и бутон */
         .filter-group { margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
         .filter-group:last-child { border-bottom: none; }
-        .filter-title { font-weight: 700; margin-bottom: 10px; color: var(--charcoal); font-family: 'Merriweather', serif; }
+        .filter-title { font-weight: 700; margin-bottom: 10px; color: #333; font-family: 'Merriweather', serif; }
 
         #btn-apply-filters {
             background-color: #20c997; color: white; width: 100%; padding: 12px;
@@ -43,19 +43,18 @@
             cursor: pointer; text-align: center; margin-top: 15px;
         }
         #btn-apply-filters:hover { background-color: #198754; transform: translateY(-2px); }
-
-        .offcanvas-lg { --bs-offcanvas-width: 300px; }
     </style>
 {% endblock %}
 
 {% block body %}
     <div class="text-center py-4 mb-4 bg-white border-bottom">
-        <h1 class="display-6 fw-bold" style="font-family: 'Merriweather', serif; color: var(--charcoal);">Bellamie</h1>
+        <h1 class="display-6 fw-bold" style="font-family: 'Merriweather', serif; color: #333;">Bellamie</h1>
         <p class="text-muted small mb-0">Ръчно изработени с любов</p>
     </div>
 
+    {# Бутон за мобилни филтри #}
     <div class="container d-lg-none mb-3">
-        <button class="btn btn-dark w-100 rounded-pill py-2 shadow-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#filterOffcanvas" aria-label="Отвори филтри">
+        <button class="btn btn-dark w-100 rounded-pill py-2 shadow-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#filterOffcanvas">
             <i class="fas fa-sliders-h me-2"></i> Филтри и Категории
         </button>
     </div>
@@ -66,7 +65,7 @@
             <div class="offcanvas-lg offcanvas-start" tabindex="-1" id="filterOffcanvas">
                 <div class="offcanvas-header border-bottom">
                     <h5 class="offcanvas-title fw-bold">Филтри</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#filterOffcanvas" aria-label="Затвори"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#filterOffcanvas"></button>
                 </div>
                 <div class="offcanvas-body p-0 p-lg-0">
                     <div class="filter-sidebar sticky-top" style="top: 20px;">
@@ -76,18 +75,20 @@
                             <label for="category-filter" class="filter-title d-block">Категория</label>
                             <select id="category-filter" class="form-select form-select-sm mt-2 shadow-none">
                                 <option value="" selected>Всички</option>
-                                {% for cat in allCategories %}
-                                    <option value="{{ cat.id }}">{{ cat.name }}</option>
-                                {% endfor %}
+                                {% if allCategories is defined %}
+                                    {% for cat in allCategories %}
+                                        <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                    {% endfor %}
+                                {% endif %}
                             </select>
                         </div>
 
                         <div class="filter-group">
                             <div class="filter-title">Цена (евро)</div>
                             <div class="d-flex gap-2 align-items-center mt-2">
-                                <input type="number" id="min-price" class="form-control form-control-sm" placeholder="От" aria-label="Минимална цена">
+                                <input type="number" id="min-price" class="form-control form-control-sm" placeholder="От">
                                 <span class="text-muted">-</span>
-                                <input type="number" id="max-price" class="form-control form-control-sm" placeholder="До" aria-label="Максимална цена">
+                                <input type="number" id="max-price" class="form-control form-control-sm" placeholder="До">
                             </div>
                         </div>
 
@@ -125,26 +126,32 @@
             </div>
         </div>
     </div>
+{% endblock %}
 
-    {# JAVASCRIPT #}
+{% block javascripts %}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const productGrid = document.getElementById('product-grid');
             const btnApply = document.getElementById('btn-apply-filters');
 
-            // --- ОПТИМИЗАЦИЯ НА СНИМКИ (Cloudinary) ---
+            // Cloudinary Оптимизация
             function getOptimizedImage(url) {
-                if (!url || !url.includes('cloudinary.com')) return url;
-                // Намаляваме размера (w_400), компресираме (q_auto), конвертираме (f_auto)
-                return url.replace('/upload/', '/upload/w_400,h_500,c_fill,q_auto,f_auto/');
+                if (!url || typeof url !== 'string' || !url.includes('cloudinary.com')) return url;
+                return url.replace('/upload/', '/upload/w_300,h_300,c_fill,q_auto:eco,f_auto,dpr_auto/');
             }
 
             function fetchProducts() {
-                const categoryId = document.getElementById('category-filter').value;
-                const minPrice = document.getElementById('min-price').value;
-                const maxPrice = document.getElementById('max-price').value;
-                const sortOrder = document.getElementById('sort-order').value;
-                const inStock = document.getElementById('inStockOnly').checked;
+                const categoryEl = document.getElementById('category-filter');
+                const minPriceEl = document.getElementById('min-price');
+                const maxPriceEl = document.getElementById('max-price');
+                const sortOrderEl = document.getElementById('sort-order');
+                const inStockEl = document.getElementById('inStockOnly');
+
+                const categoryId = categoryEl ? categoryEl.value : '';
+                const minPrice = minPriceEl ? minPriceEl.value : '';
+                const maxPrice = maxPriceEl ? maxPriceEl.value : '';
+                const sortOrder = sortOrderEl ? sortOrderEl.value : 'newest';
+                const inStock = inStockEl ? inStockEl.checked : false;
 
                 let url = '/api/products?sort=' + sortOrder;
                 if (categoryId) url += '&category_id=' + categoryId;
@@ -152,81 +159,69 @@
                 if (maxPrice) url += '&max_price=' + maxPrice;
                 if (inStock) url += '&in_stock=true';
 
-                productGrid.style.opacity = '0.5';
+                if(productGrid) productGrid.style.opacity = '0.5';
 
                 fetch(url)
                     .then(response => response.json())
                     .then(products => {
+                        if(!productGrid) return;
                         productGrid.style.opacity = '1';
                         productGrid.innerHTML = '';
 
-                        if (products.length === 0) {
+                        if (!Array.isArray(products) || products.length === 0) {
                             productGrid.innerHTML = '<div class="col-12 text-center py-5"><h5 class="text-muted">Няма намерени продукти.</h5></div>';
                             return;
                         }
 
-                        products.forEach(product => {
-                            const btnClass = product.isFavorite ? 'btn-danger' : 'btn-outline-danger';
-                            const iconClass = product.isFavorite ? 'fas' : 'far';
+                        products.forEach((product, index) => {
+                            const isFav = product.isFavorite === true;
+                            const btnClass = isFav ? 'btn-danger' : 'btn-outline-danger';
+                            const iconClass = isFav ? 'fas' : 'far';
 
-                            // Използваме оптимизирани URL-и
-                            const optimizedImg = getOptimizedImage(product.image);
-                            const optimizedHoverImg = getOptimizedImage(product.hoverImage);
+                            const productImg = product.image || '/images/placeholder.jpg';
+                            const productHoverImg = product.hoverImage || productImg;
+
+                            const optimizedImg = getOptimizedImage(productImg);
+                            const optimizedHoverImg = getOptimizedImage(productHoverImg);
+
+                            let loadingType = 'lazy';
+                            let fetchPriority = 'auto';
+                            if (index < 2) {
+                                loadingType = 'eager';
+                                fetchPriority = 'high';
+                            }
 
                             const col = document.createElement('div');
                             col.className = 'col-6 col-md-4 col-lg-4';
+
                             col.innerHTML = `
-                                <div class="product-card h-100 shadow-sm border-0 bg-white d-flex flex-column">
-                                    <a href="/product/${product.id}" class="text-decoration-none text-dark">
-                                        <div class="image-swap-container">
-                                            <img src="${optimizedImg}"
-                                                 class="img-front"
-                                                 alt="${product.name}"
-                                                 width="300" height="300"
-                                                 loading="lazy"
-                                                 decoding="async">
-                                            <img src="${optimizedHoverImg}"
-                                                 class="img-back"
-                                                 alt="${product.name}"
-                                                 width="300" height="300"
-                                                 loading="lazy"
-                                                 decoding="async">
-                                            <div class="hover-overlay">
-                                                <span class="badge-view">РАЗГЛЕДАЙ</span>
-                                            </div>
-                                        </div>
-                                        <div class="p-3 pb-0">
-                                            <h3 class="fw-bold text-truncate mb-1 h6" style="font-size: 0.95rem;">${product.name}</h3>
-                                            <div class="text-primary fw-bold">${product.price} евро</div>
-                                        </div>
-                                    </a>
-
-                                    <div class="p-3 mt-auto d-flex gap-2">
-                                        <a href="/cart/add/${product.id}"
-                                           class="btn btn-sm btn-outline-dark flex-grow-1 rounded-pill"
-                                           aria-label="Добави ${product.name} в количката">
-                                            <i class="fas fa-shopping-cart"></i> Добави
-                                        </a>
-
-                                        <button class="btn btn-sm ${btnClass} rounded-circle"
-                                                style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;"
-                                                onclick="toggleWishlist(this, ${product.id})"
-                                                aria-label="Добави в любими">
-                                            <i class="${iconClass} fa-heart"></i>
-                                        </button>
+                            <div class="product-card h-100 shadow-sm border-0 bg-white d-flex flex-column">
+                                <a href="/product/${product.id}" class="text-decoration-none text-dark">
+                                    <div class="image-swap-container">
+                                        <img src="${optimizedImg}" class="img-front" alt="${product.name}" width="300" height="300" loading="${loadingType}" fetchpriority="${fetchPriority}" decoding="async">
+                                        <img src="${optimizedHoverImg}" class="img-back" alt="${product.name}" width="300" height="300" loading="lazy" decoding="async">
+                                        <div class="hover-overlay"><span class="badge-view">РАЗГЛЕДАЙ</span></div>
                                     </div>
+                                    <div class="p-3 pb-0">
+                                        <h3 class="fw-bold text-truncate mb-1 h6" style="font-size: 0.95rem;">${product.name}</h3>
+                                        <div class="text-primary fw-bold">${product.price} евро</div>
+                                    </div>
+                                </a>
+                                <div class="p-3 mt-auto d-flex gap-2">
+                                    <a href="/cart/add/${product.id}" class="btn btn-sm btn-outline-dark flex-grow-1 rounded-pill"><i class="fas fa-shopping-cart"></i> Добави</a>
+                                    <button class="btn btn-sm ${btnClass} rounded-circle" style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;" onclick="toggleWishlist(this, ${product.id})"><i class="${iconClass} fa-heart"></i></button>
                                 </div>
-                            `;
+                            </div>
+                        `;
                             productGrid.appendChild(col);
                         });
                     })
                     .catch(error => {
-                        console.error('Error:', error);
-                        productGrid.innerHTML = '<div class="col-12 text-danger text-center">Грешка при зареждането.</div>';
+                        if(productGrid) productGrid.innerHTML = '<div class="col-12 text-danger text-center">Грешка при зареждането.</div>';
                     });
             }
 
-            fetchProducts();
+            if(productGrid) fetchProducts();
             if (btnApply) btnApply.addEventListener('click', fetchProducts);
         });
     </script>
