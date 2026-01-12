@@ -13,7 +13,7 @@
     <style>
         :root {
             --teal: #40E0D0;
-            --teal-dark: #008080; /* ОЩЕ ПО-ТЪМНО за перфектен контраст (Accessibility fix) */
+            --teal-dark: #008080; /* Тъмен цвят за добър контраст */
             --cream: #f8f5f2;
             --charcoal: #333;
             --border-light: #e8e3de;
@@ -38,8 +38,7 @@
         .logo {
             font-size: 32px;
             font-weight: 700;
-            /* ПРОМЯНА: Използваме тъмния цвят за да мине теста за контраст */
-            color: var(--teal-dark);
+            color: var(--teal-dark); /* Contrast fix */
             text-decoration: none;
             font-family: 'Merriweather', serif;
             display: flex;
@@ -112,7 +111,6 @@
             border-bottom: 1px solid var(--border-light);
         }
 
-        /* CSS за Продуктовата карта */
         .product-card {
             background: white;
             border: 1px solid var(--border-light);
@@ -174,7 +172,6 @@
 
         .product-card:hover .badge-view { transform: translateY(0); }
 
-        /* Backward compatibility */
         .product-card img:not(.img-front):not(.img-back) {
             width: 100%; height: 250px; object-fit: cover; border-radius: 8px; margin-bottom: 15px;
         }
@@ -282,7 +279,6 @@
     </div>
 
     <div class="categories-nav">
-        {# Ляво подравняване #}
         <div class="container d-flex justify-content-start">
             {{ render(controller('App\\Controller\\CategoryController::getMenu')) }}
         </div>
@@ -357,7 +353,8 @@
 
                         const col = document.createElement('div');
                         col.className = 'col-6 col-md-4 col-lg-3 mb-4';
-                        // ТУК СА ВАЖНИТЕ ПРОМЕНИ ЗА ACCESSIBILITY (JS):
+
+                        // --- ВАЖНИ ПОПРАВКИ ТУК ---
                         col.innerHTML = `
                         <div class="product-card h-100 shadow-sm border-0 bg-white d-flex flex-column">
                             <a href="/product/${product.id}" style="text-decoration: none; color: inherit;">
