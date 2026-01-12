@@ -15,36 +15,32 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
 
     <meta name="description" content="Уникални, ръчно изработени творения за вас и вашия дом от Bellamie.">
 
     <style>
         :root {
             --teal: #40E0D0;
-            --teal-dark: #008080; /* По-тъмен цвят за Accessibility Contrast */
+            --teal-dark: #008080;
             --cream: #f8f5f2;
             --charcoal: #333;
             --border-light: #e8e3de;
         }
-
         body {
             font-family: 'Open Sans', sans-serif;
             background-color: var(--cream);
             color: var(--charcoal);
         }
-
-        /* CLS FIX: Запазва място за снимките преди да заредят */
+        /* CLS FIX: Запазва място за снимките */
         img {
             max-width: 100%;
             height: auto;
-            vertical-align: middle;
             font-style: italic;
+            vertical-align: middle;
         }
-
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Merriweather', serif;
-        }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Merriweather', serif; }
 
         .header-top {
             background-color: white;
