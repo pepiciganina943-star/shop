@@ -136,7 +136,7 @@
                             <form method="GET">
                                 {# 2. ЦЕНА #}
                                 <div class="filter-group">
-                                    <div class="filter-title">Цена (лв)</div>
+                                    <div class="filter-title">Цена (евро)</div>
                                     <div class="d-flex gap-2 align-items-center">
                                         <input type="number" name="min_price" class="form-control form-control-sm" placeholder="От" value="{{ app.request.query.get('min_price') }}">
                                         <span class="text-muted">-</span>
@@ -211,7 +211,7 @@
                                     </div>
                                     <div class="p-3 pb-0">
                                         <h6 class="fw-bold text-truncate mb-1">{{ product.name }}</h6>
-                                        <div class="text-primary fw-bold mb-2">{{ product.price }} лв</div>
+                                        <div class="text-primary fw-bold mb-2">{{ product.price }} евро</div>
                                     </div>
                                 </a>
 

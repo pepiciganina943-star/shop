@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{# 1. ДОБАВЯМЕ META ДАННИ ЗА FACEBOOK #}
+{# 1. META ДАННИ ЗА FACEBOOK #}
 {% block meta_og %}
     <meta property="og:title" content="{{ product.name }} | Bellamie">
     <meta property="og:description" content="{{ product.description|striptags|slice(0, 200) }}...">
@@ -9,24 +9,15 @@
     <meta property="product:price:amount" content="{{ product.price }}">
     <meta property="product:price:currency" content="BGN">
 
-    {# Логика за намиране на правилната снимка за Facebook #}
-    {% set ogImage = '' %}
+    {% set metaImg = '' %}
     {% if product.coverImage %}
-        {% if 'http' in product.coverImage.filename %}
-            {% set ogImage = product.coverImage.filename %}
-        {% else %}
-            {% set ogImage = absolute_url(asset('uploads/products/' ~ product.coverImage.filename)) %}
-        {% endif %}
+        {% set metaImg = 'http' in product.coverImage.filename ? product.coverImage.filename : absolute_url(asset('uploads/products/' ~ product.coverImage.filename)) %}
     {% elseif product.imageFilename %}
-        {% if 'http' in product.imageFilename %}
-            {% set ogImage = product.imageFilename %}
-        {% else %}
-            {% set ogImage = absolute_url(asset('uploads/products/' ~ product.imageFilename)) %}
-        {% endif %}
+        {% set metaImg = 'http' in product.imageFilename ? product.imageFilename : absolute_url(asset('uploads/products/' ~ product.imageFilename)) %}
     {% else %}
-        {% set ogImage = absolute_url(asset('images/placeholder.jpg')) %}
+        {% set metaImg = absolute_url(asset('images/placeholder.jpg')) %}
     {% endif %}
-    <meta property="og:image" content="{{ ogImage }}">
+    <meta property="og:image" content="{{ metaImg }}">
 {% endblock %}
 
 {% block title %}{{ product.name }} - Детайли{% endblock %}
@@ -34,102 +25,74 @@
 {% block stylesheets %}
     {{ parent() }}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/drift-zoom@1.3.1/dist/drift-basic.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <style>
-        .product-details {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
-        }
+        .product-details { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 3px 15px rgba(0,0,0,0.1); }
+        .price-display { font-size: 2.5rem; color: var(--teal); font-weight: bold; }
 
-        .price-display {
-            font-size: 2.5rem;
-            color: var(--teal); /* Използваме твоя цвят */
-            font-weight: bold;
-        }
+        .gallery-container { position: sticky; top: 20px; }
+        .main-image-wrapper { width: 100%; height: 500px; background: #f8f9fa; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; border: 2px solid #e9ecef; position: relative; overflow: hidden; }
+        .main-image { width: 100%; height: 100%; object-fit: contain; transform-origin: center center; transition: transform 0.1s ease-out; cursor: crosshair; }
 
-        /* Gallery Styles */
-        .gallery-container {
-            position: sticky;
-            top: 20px;
-        }
+        @media (max-width: 768px) { .main-image-wrapper { height: 350px; touch-action: none; } }
 
-        .main-image-wrapper {
-            width: 100%;
-            height: 500px;
-            background: #f8f9fa;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid #e9ecef;
+        .thumbnails-container { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+        .thumbnail { width: 80px; height: 80px; border-radius: 8px; overflow: hidden; border: 3px solid transparent; cursor: pointer; transition: all 0.3s ease; background: #f8f9fa; }
+        .thumbnail:hover, .thumbnail.active { border-color: var(--teal); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .thumbnail img { width: 100%; height: 100%; object-fit: cover; }
+        .drift-zoom-pane { background: #fff; border: 3px solid var(--teal); border-radius: 8px; box-shadow: 0 8px 30px rgba(0,0,0,0.3); z-index: 9999; }
+
+        .similar-products-swiper { padding: 20px 0 50px; }
+        .swiper-button-next, .swiper-button-prev { color: var(--teal); }
+        .swiper-pagination-bullet-active { background: var(--teal); }
+
+        /* --- ВАЖНО: CSS ЗА HOVER ЕФЕКТА --- */
+        .image-swap-container {
             position: relative;
             overflow: hidden;
+            border-radius: 8px;
+            background: #fff; /* Бял фон, за да не прозира */
         }
-
-        .main-image {
+        .image-swap-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             object-fit: contain;
-            transform-origin: center center;
-            transition: transform 0.1s ease-out;
-            will-change: transform;
-            cursor: crosshair;
-        }
-
-        /* Mobile specific adjustments */
-        @media (max-width: 768px) {
-            .main-image-wrapper {
-                height: 350px;
-                touch-action: none;
-            }
-        }
-
-        .thumbnails-container {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .thumbnail {
-            width: 80px;
-            height: 80px;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 3px solid transparent;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: #f8f9fa;
-        }
-
-        .thumbnail:hover, .thumbnail.active {
-            border-color: var(--teal);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-
-        .thumbnail img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        /* Drift Zoom Customization (Desktop only) */
-        .drift-zoom-pane {
+            transition: opacity 0.3s ease-in-out;
             background: #fff;
-            border: 3px solid var(--teal);
-            border-radius: 8px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
-            z-index: 9999;
+        }
+        .image-swap-container .img-front {
+            z-index: 2;
+            opacity: 1;
+        }
+        .image-swap-container .img-back {
+            z-index: 1;
+            opacity: 0;
+        }
+        /* Магията при ховър */
+        .product-card:hover .image-swap-container .img-front {
+            opacity: 0;
+        }
+        .product-card:hover .image-swap-container .img-back {
+            opacity: 1;
         }
     </style>
 {% endblock %}
 
 {% block body %}
     <div class="container mt-4 mb-5">
-        {# Breadcrumbs #}
+        {# Логика за главната снимка #}
+        {% set initialImg = '' %}
+        {% if product.coverImage %}
+            {% set initialImg = 'http' in product.coverImage.filename ? product.coverImage.filename : asset('uploads/products/' ~ product.coverImage.filename) %}
+        {% elseif product.imageFilename %}
+            {% set initialImg = 'http' in product.imageFilename ? product.imageFilename : asset('uploads/products/' ~ product.imageFilename) %}
+        {% else %}
+            {% set initialImg = asset('images/placeholder.jpg') %}
+        {% endif %}
+
         <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="{{ path('app_home') }}">Начало</a></li>
@@ -138,49 +101,19 @@
         </nav>
 
         <div class="row">
+            {# ГАЛЕРИЯ #}
             <div class="col-lg-6 mb-4">
                 <div class="gallery-container">
-                    {% set coverImage = product.coverImage %}
-                    {% set allImages = product.images %}
-
-                    {# --- ГЛАВНА СНИМКА --- #}
                     <div class="main-image-wrapper" id="imageWrapper">
-                        {% if coverImage %}
-                            {% if 'http' in coverImage.filename %}
-                                <img src="{{ coverImage.filename }}" class="main-image" id="mainImage" data-zoom="{{ coverImage.filename }}" alt="{{ product.name }}">
-                            {% else %}
-                                <img src="{{ asset('uploads/products/' ~ coverImage.filename) }}" class="main-image" id="mainImage" data-zoom="{{ asset('uploads/products/' ~ coverImage.filename) }}" alt="{{ product.name }}">
-                            {% endif %}
-                        {% elseif product.imageFilename %}
-                            {% if 'http' in product.imageFilename %}
-                                <img src="{{ product.imageFilename }}" class="main-image" id="mainImage" data-zoom="{{ product.imageFilename }}" alt="{{ product.name }}">
-                            {% else %}
-                                <img src="{{ asset('uploads/products/' ~ product.imageFilename) }}" class="main-image" id="mainImage" data-zoom="{{ asset('uploads/products/' ~ product.imageFilename) }}" alt="{{ product.name }}">
-                            {% endif %}
-                        {% else %}
-                            <img src="{{ asset('images/placeholder.jpg') }}" class="main-image" id="mainImage" alt="Няма снимка">
-                        {% endif %}
+                        <img src="{{ initialImg }}" class="main-image" id="mainImage" data-zoom="{{ initialImg }}" alt="{{ product.name }}">
                     </div>
 
-                    {# --- МИНИАТЮРИ --- #}
-                    {% if allImages|length > 1 %}
+                    {% if product.images|length > 1 %}
                         <div class="thumbnails-container">
-                            {% for image in allImages %}
-                                {% if 'http' in image.filename %}
-                                    {% set imgUrl = image.filename %}
-                                {% else %}
-                                    {% set imgUrl = asset('uploads/products/' ~ image.filename) %}
-                                {% endif %}
-
-                                {# Lighthouse: Добавени role, tabindex и aria-label за достъпност #}
-                                <div class="thumbnail {% if loop.first %}active{% endif %}"
-                                     role="button"
-                                     tabindex="0"
-                                     aria-label="Виж снимка {{ loop.index }}"
-                                     data-image="{{ imgUrl }}"
-                                     onclick="switchImage(this)"
-                                     onkeydown="if(event.key === 'Enter') switchImage(this)">
-                                    <img src="{{ imgUrl }}" alt="">
+                            {% for image in product.images %}
+                                {% set thumbUrl = 'http' in image.filename ? image.filename : asset('uploads/products/' ~ image.filename) %}
+                                <div class="thumbnail {% if loop.first %}active{% endif %}" role="button" tabindex="0" aria-label="Виж снимка {{ loop.index }}" data-image="{{ thumbUrl }}" onclick="switchImage(this)">
+                                    <img src="{{ thumbUrl }}" alt="">
                                 </div>
                             {% endfor %}
                         </div>
@@ -188,88 +121,46 @@
                 </div>
             </div>
 
+            {# ДЕТАЙЛИ #}
             <div class="col-lg-6">
                 <div class="product-details">
                     <h1 class="mb-3 fw-bold">{{ product.name }}</h1>
-
                     <div class="d-flex align-items-center mb-4">
                         <span class="price-display me-3">{{ product.price }} евро.</span>
-
                         {% if product.stock > 0 %}
-                            <span class="badge bg-success rounded-pill px-3 py-2">
-                                <i class="fas fa-check"></i> В наличност ({{ product.stock }} бр.)
-                            </span>
+                            <span class="badge bg-success rounded-pill px-3 py-2"><i class="fas fa-check"></i> В наличност ({{ product.stock }} бр.)</span>
                         {% else %}
-                            <span class="badge bg-danger rounded-pill px-3 py-2">
-                                <i class="fas fa-times"></i> Изчерпано
-                            </span>
+                            <span class="badge bg-danger rounded-pill px-3 py-2"><i class="fas fa-times"></i> Изчерпано</span>
                         {% endif %}
                     </div>
 
                     <div class="mb-4">
-                        {# Lighthouse: h5 сменен на h2 с клас h5 за правилна йерархия #}
                         <h2 class="h5 text-muted mb-3">Описание</h2>
-                        <div class="description-content text-secondary">
-                            {{ product.description|raw }}
-                        </div>
+                        <div class="description-content text-secondary">{{ product.description|raw }}</div>
                     </div>
 
-                    {# 3. ДОБАВЕН БУТОН ЗА FACEBOOK #}
                     <div class="mb-4 pt-3 border-top">
                         <p class="small text-muted mb-2">Харесва ли ви? Споделете с приятели:</p>
-                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ app.request.uri|url_encode }}"
-                           target="_blank"
-                           rel="noopener"
-                           class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ app.request.uri|url_encode }}" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm rounded-pill px-3">
                             <i class="fab fa-facebook me-2"></i> Сподели във Facebook
                         </a>
                     </div>
 
                     <hr class="my-4">
-
                     <div class="actions">
-                        {% if product.stock > 0 %}
-                            {# Слагаме бутоните в един ред с d-flex #}
-                            <div class="d-flex gap-2">
-                                {# Бутон Купи (заема основното място) #}
+                        <div class="d-flex gap-2">
+                            {% if product.stock > 0 %}
                                 <a href="{{ path('app_cart_add', { id: product.id }) }}" class="btn btn-primary btn-lg rounded-pill shadow-sm flex-grow-1">
                                     <i class="fas fa-shopping-cart me-2"></i> Добави
                                 </a>
+                            {% else %}
+                                <button class="btn btn-secondary btn-lg flex-grow-1 rounded-pill" disabled>Изчерпано</button>
+                            {% endif %}
 
-                                {# Логика за Любими #}
-                                {% set isFavorite = false %}
-                                {% if app.user and product in app.user.favorites %}
-                                    {% set isFavorite = true %}
-                                {% endif %}
-
-                                {# Бутон Любими #}
-                                <button class="btn {{ isFavorite ? 'btn-danger' : 'btn-outline-danger' }} rounded-circle d-flex align-items-center justify-content-center shadow-sm"
-                                        style="width: 50px; height: 48px; transition: all 0.3s;"
-                                        onclick="toggleWishlist(this, {{ product.id }})"
-                                        title="Добави в любими">
-                                    <i class="{{ isFavorite ? 'fas' : 'far' }} fa-heart fa-lg"></i>
-                                </button>
-                            </div>
-                        {% else %}
-                            {# Логика при изчерпан продукт - бутонът за любими остава активен! #}
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-secondary btn-lg flex-grow-1 rounded-pill" disabled>
-                                    Изчерпано
-                                </button>
-
-                                {% set isFavorite = false %}
-                                {% if app.user and product in app.user.favorites %}
-                                    {% set isFavorite = true %}
-                                {% endif %}
-
-                                <button class="btn {{ isFavorite ? 'btn-danger' : 'btn-outline-danger' }} rounded-circle d-flex align-items-center justify-content-center shadow-sm"
-                                        style="width: 50px; height: 48px;"
-                                        onclick="toggleWishlist(this, {{ product.id }})">
-                                    <i class="{{ isFavorite ? 'fas' : 'far' }} fa-heart fa-lg"></i>
-                                </button>
-                            </div>
-                        {% endif %}
-
+                            <button class="btn btn-outline-danger rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 50px; height: 48px;" onclick="toggleWishlist(this, {{ product.id }})" aria-label="Добави в любими">
+                                <i class="far fa-heart fa-lg"></i>
+                            </button>
+                        </div>
                         <a href="{{ path('app_home') }}" class="btn btn-link text-decoration-none mt-3 d-block text-center text-muted">
                             <i class="fas fa-arrow-left me-1"></i> Продължи пазаруването
                         </a>
@@ -277,135 +168,142 @@
                 </div>
             </div>
         </div>
+
+
+        {# СЕКЦИЯ ПОДОБНИ ПРОДУКТИ #}
+        {% if similarProducts|length > 0 %}
+            <div class="container mt-5 pt-5 border-top">
+                <h3 class="mb-4 fw-bold">Подобни продукти</h3>
+                <div class="swiper similar-products-swiper">
+                    <div class="swiper-wrapper">
+                        {% for similar in similarProducts %}
+                            <div class="swiper-slide">
+                                <div class="product-card h-100 shadow-sm border-0 bg-white d-flex flex-column p-2">
+                                    <a href="{{ path('app_product_show', {id: similar.id}) }}" style="text-decoration: none; color: inherit;">
+
+                                        {# 1. ОПРЕДЕЛЯНЕ НА ПРЕДНАТА СНИМКА #}
+                                        {% set rawFront = '' %}
+                                        {% if similar.coverImage %}
+                                            {% set rawFront = similar.coverImage.filename %}
+                                        {% elseif similar.imageFilename %}
+                                            {% set rawFront = similar.imageFilename %}
+                                        {% endif %}
+
+                                        {% set frontImg = asset('images/placeholder.jpg') %}
+                                        {% if rawFront %}
+                                            {% set frontImg = 'http' in rawFront ? rawFront : asset('uploads/products/' ~ rawFront) %}
+                                        {% endif %}
+
+
+                                        {# 2. ОПРЕДЕЛЯНЕ НА ЗАДНАТА СНИМКА (ТЪРСИМ РАЗЛИЧНА) #}
+                                        {% set backImg = frontImg %}
+
+                                        {# Проверяваме дали има галерия #}
+                                        {% if similar.images|length > 0 %}
+                                            {# Циклим през снимките, за да намерим РАЗЛИЧНА от предната #}
+                                            {% for img in similar.images %}
+                                                {% if backImg == frontImg %} {# Само ако още не сме намерили различна #}
+                                                    {% set rawBack = img.filename %}
+                                                    {% if rawBack != rawFront %}
+                                                        {# Намерихме различна! Задаваме я и спираме #}
+                                                        {% set backImg = 'http' in rawBack ? rawBack : asset('uploads/products/' ~ rawBack) %}
+                                                    {% endif %}
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endif %}
+
+                                        {# --- ВИЗУАЛИЗАЦИЯ --- #}
+                                        <div class="image-swap-container" style="height: 200px;">
+                                            <img src="{{ frontImg }}" class="img-front" alt="{{ similar.name }}">
+                                            <img src="{{ backImg }}" class="img-back" alt="{{ similar.name }}">
+
+                                            <div class="hover-overlay">
+                                                <span class="badge-view" style="font-size: 12px; padding: 8px 20px;">ВИЖ</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="p-2 text-center">
+                                            <h4 class="h6 fw-bold text-truncate mb-1">{{ similar.name }}</h4>
+                                            <div class="text-primary fw-bold small">{{ similar.price }} лв.</div>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="swiper-pagination"></div>
+                    <div class="swiper-button-next"></div>
+                    <div class="swiper-button-prev"></div>
+                </div>
+            </div>
+        {% endif %}
     </div>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
     <script src="https://cdn.jsdelivr.net/npm/drift-zoom@1.3.1/dist/Drift.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script>
+        // --- DRIFT ZOOM ЛОГИКА ---
         let driftInstance = null;
         const mainImage = document.getElementById('mainImage');
         const imageWrapper = document.getElementById('imageWrapper');
 
-        // 1. Logic for DESKTOP (Drift Zoom)
         function initDesktopZoom() {
-            if (!mainImage) return;
-
-            if (driftInstance) {
-                return;
-            }
-
-            // Проверка дали Drift е зареден правилно
+            if (!mainImage || driftInstance) return;
             if (typeof Drift !== 'undefined') {
-                driftInstance = new Drift(mainImage, {
-                    paneContainer: imageWrapper,
-                    inlinePane: false,
-                    containInline: true,
-                    hoverBoundingBox: true,
-                    touchBoundingBox: false,
-                    zoomFactor: 3,
-                    sourceAttribute: 'data-zoom'
-                });
+                driftInstance = new Drift(mainImage, { paneContainer: imageWrapper, inlinePane: false, zoomFactor: 3, sourceAttribute: 'data-zoom' });
             }
-        }
-
-        // 2. Logic for MOBILE (Touch & Pan Zoom)
-        function initMobileZoom() {
-            if (!mainImage || !imageWrapper) return;
-
-            let isZooming = false;
-
-            imageWrapper.addEventListener('touchstart', function(e) {
-                if (e.touches.length === 1) {
-                    isZooming = true;
-                    handleMobileZoom(e.touches[0]);
-                }
-            }, { passive: true });
-
-            imageWrapper.addEventListener('touchmove', function(e) {
-                if (isZooming && e.touches.length === 1) {
-                    e.preventDefault();
-                    handleMobileZoom(e.touches[0]);
-                }
-            }, { passive: false });
-
-            imageWrapper.addEventListener('touchend', function() {
-                isZooming = false;
-                resetMobileZoom();
-            });
-
-            imageWrapper.addEventListener('touchcancel', function() {
-                isZooming = false;
-                resetMobileZoom();
-            });
-        }
-
-        function handleMobileZoom(touch) {
-            const rect = imageWrapper.getBoundingClientRect();
-
-            let x = ((touch.clientX - rect.left) / rect.width) * 100;
-            let y = ((touch.clientY - rect.top) / rect.height) * 100;
-
-            x = Math.max(0, Math.min(100, x));
-            y = Math.max(0, Math.min(100, y));
-
-            mainImage.style.transformOrigin = `${x}% ${y}%`;
-            mainImage.style.transform = "scale(2.5)";
-        }
-
-        function resetMobileZoom() {
-            mainImage.style.transform = "scale(1)";
-            setTimeout(() => {
-                if (mainImage.style.transform === "scale(1)") {
-                    mainImage.style.transformOrigin = "center center";
-                }
-            }, 100);
         }
 
         window.switchImage = function(thumbnail) {
-            const newImageSrc = thumbnail.getAttribute('data-image');
+            const newSrc = thumbnail.getAttribute('data-image');
+            if (!mainImage) return;
 
             mainImage.style.opacity = '0.5';
 
             setTimeout(() => {
-                mainImage.src = newImageSrc;
-                mainImage.setAttribute('data-zoom', newImageSrc);
+                mainImage.src = newSrc;
+                mainImage.setAttribute('data-zoom', newSrc);
                 mainImage.style.opacity = '1';
 
-                if (driftInstance) {
-                    driftInstance.setZoomImageURL(newImageSrc);
+                if (driftInstance && typeof driftInstance.setZoomImageURL === 'function') {
+                    driftInstance.setZoomImageURL(newSrc);
                 }
             }, 150);
 
-            document.querySelectorAll('.thumbnail').forEach(thumb => {
-                thumb.classList.remove('active');
-            });
+            document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
             thumbnail.classList.add('active');
         };
 
+        // --- SWIPER SLIDER НАСТРОЙКИ ---
         document.addEventListener('DOMContentLoaded', function() {
-            if (window.matchMedia("(min-width: 769px)").matches) {
-                initDesktopZoom();
-            } else {
-                initMobileZoom();
-            }
-        });
+            if (window.matchMedia("(min-width: 769px)").matches) initDesktopZoom();
 
-        let resizeTimer;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(() => {
-                if (window.matchMedia("(min-width: 769px)").matches) {
-                    initDesktopZoom();
-                    mainImage.style.transform = "none";
-                } else {
-                    if (driftInstance) {
-                        driftInstance.disable();
-                    }
-                    initMobileZoom();
+            new Swiper('.similar-products-swiper', {
+                slidesPerView: 1,
+                spaceBetween: 20,
+
+                // 1. БЕЗКРАЕН ЦИКЪЛ
+                loop: true,
+
+                // 2. АВТОМАТИЧНО ВЪРТЕНЕ
+                autoplay: {
+                    delay: 3000, // Сменя се на всеки 3 секунди
+                    disableOnInteraction: false, // Продължава да се върти дори след като го пипнеш
+                    pauseOnMouseEnter: true, // Спира, когато мишката е отгоре (за да може клиентът да разгледа)
+                },
+
+                pagination: { el: '.swiper-pagination', clickable: true },
+                navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
+
+                breakpoints: {
+                    640: { slidesPerView: 2 },
+                    1024: { slidesPerView: 4 }
                 }
-            }, 250);
+            });
         });
     </script>
 {% endblock %}
