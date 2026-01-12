@@ -60,4 +60,27 @@ class ProductRepository extends ServiceEntityRepository
 
         return $qb->getQuery()->getResult();
     }
+    /**
+     * @return Product[] Returns an array of Product objects
+     */
+    public function searchByName(string $query): array
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.name LIKE :val OR p.description LIKE :val')
+            ->setParameter('val', '%' . $query . '%')
+            ->orderBy('p.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+    /**
+     * Взима само имената на всички продукти за сравнение
+     */
+    public function getAllProductNames(): array
+    {
+        // Връща масив от стрингoве: ['Костенурка', 'Заек', 'Гердан'...]
+        return $this->createQueryBuilder('p')
+            ->select('p.name')
+            ->getQuery()
+            ->getSingleColumnResult();
+    }
 }

@@ -1,0 +1,77 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Търсене за "{{ query }}"{% endblock %}
+
+{% block body %}
+    <div class="container mt-5 mb-5" style="min-height: 60vh;">
+        <h1 class="mb-4">Резултати от търсенето за: <span class="text-primary">"{{ query }}"</span></h1>
+
+        {% if products|length > 0 %}
+            {# СЛУЧАЙ 1: Има намерени продукти #}
+            <div class="row">
+                {% for product in products %}
+                    <div class="col-md-4 col-lg-3 mb-4">
+                        <div class="card h-100 shadow-sm product-card border-0">
+
+                            {# ЛОГИКА ЗА СНИМКИТЕ #}
+                            {% set imgPath = asset('images/placeholder.jpg') %}
+                            {% if product.coverImage %}
+                                {% set imgPath = 'http' in product.coverImage.filename ? product.coverImage.filename : asset('uploads/products/' ~ product.coverImage.filename) %}
+                            {% elseif product.imageFilename %}
+                                {% set imgPath = 'http' in product.imageFilename ? product.imageFilename : asset('uploads/products/' ~ product.imageFilename) %}
+                            {% endif %}
+
+                            {# Линк към детайлите върху снимката #}
+                            <a href="{{ path('app_product_show', {id: product.id}) }}">
+                                <img src="{{ imgPath }}" class="card-img-top" alt="{{ product.name }}" style="height: 250px; object-fit: cover; border-radius: 5px;">
+                            </a>
+
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">
+                                    <a href="{{ path('app_product_show', {id: product.id}) }}" class="text-decoration-none text-dark">
+                                        {{ product.name }}
+                                    </a>
+                                </h5>
+                                <p class="card-text text-muted small">{{ product.description|striptags|slice(0, 80) }}...</p>
+
+                                <div class="mt-auto d-flex justify-content-between align-items-center pt-3 border-top">
+                                    <span class="fw-bold fs-5 text-primary">{{ product.price }} лв.</span>
+                                    <a href="{{ path('app_product_show', {id: product.id}) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                        Виж повече
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            {# СЛУЧАЙ 2: Няма резултати #}
+            <div class="alert alert-light border text-center p-5 shadow-sm rounded-3">
+                <i class="fas fa-search fa-3x mb-3 text-secondary opacity-50"></i>
+
+                {% if suggestion is defined and suggestion %}
+                    {# Подслучай: Имаме предложение за подобна дума #}
+                    <h3 class="text-danger fw-bold">Не открихме резултати за "{{ query }}"</h3>
+                    <div class="mt-4 fs-4">
+                        Може би имахте предвид:
+                        <br>
+                        <a href="{{ path('app_search', {q: suggestion}) }}" class="fw-bold text-decoration-underline text-success fs-2">
+                            {{ suggestion }}?
+                        </a>
+                    </div>
+                    <p class="text-muted mt-3">Натиснете върху предложената дума, за да видите резултатите.</p>
+                {% else %}
+                    {# Подслучай: Нямаме никаква идея какво търси #}
+                    <h3>Няма намерени продукти</h3>
+                    <p class="text-muted">За съжаление не открихме нищо, което да отговаря на вашето търсене.</p>
+                    <div class="mt-4">
+                        <a href="{{ path('app_home') }}" class="btn btn-primary rounded-pill px-4">
+                            <i class="fas fa-arrow-left me-2"></i> Разгледайте всички продукти
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
