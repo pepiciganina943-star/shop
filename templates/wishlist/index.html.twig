@@ -10,34 +10,31 @@
             <h1 class="fw-bold mb-0 me-3" style="font-family: 'Merriweather', serif;">
                 <i class="fas fa-heart text-danger me-2"></i>Моите Любими
             </h1>
-            {# ПРОМЯНА ТУК: Взимаме бройката директно от потребителя #}
-            <span class="badge bg-success rounded-pill px-3 py-2">
+            {# Добавихме ID "wishlist-counter", за да го променяме с JS #}
+            <span id="wishlist-counter" class="badge bg-success rounded-pill px-3 py-2">
                 {{ app.user.favorites|length }} артикула
             </span>
         </div>
 
         {# СПИСЪК С ПРОДУКТИ #}
-        <div class="row g-4">
-            {# ПРОМЯНА ТУК: Въртим цикъла през app.user.favorites #}
+        <div class="row g-4" id="wishlist-container">
             {% for product in app.user.favorites %}
-                <div class="col-6 col-md-4 col-lg-3">
+                {# Добавяме ID на колоната, за да я изтрием лесно с JS #}
+                <div class="col-6 col-md-4 col-lg-3 product-item" id="product-card-{{ product.id }}">
                     <div class="product-card h-100 shadow-sm border-0 bg-white rounded position-relative">
 
-                        {# СНИМКИ (ПОПРАВЕНИ) #}
+                        {# СНИМКИ #}
                         <div class="wishlist-img-container position-relative overflow-hidden rounded-top" style="aspect-ratio: 1/1;">
                             <a href="{{ path('app_product_show', {id: product.id}) }}" class="d-block w-100 h-100">
                                 {% set images = product.images %}
                                 {% if images|length > 0 %}
-                                    {# Логика за първата снимка #}
                                     {% set imgPath1 = images[0].filename starts with 'http' ? images[0].filename : asset('uploads/products/' ~ images[0].filename) %}
                                     <img src="{{ imgPath1 }}" class="img-front w-100 h-100 object-fit-cover position-absolute top-0 start-0" alt="{{ product.name }}">
 
                                     {% if images|length > 1 %}
-                                        {# Логика за втората снимка #}
                                         {% set imgPath2 = images[1].filename starts with 'http' ? images[1].filename : asset('uploads/products/' ~ images[1].filename) %}
                                         <img src="{{ imgPath2 }}" class="img-back w-100 h-100 object-fit-cover position-absolute top-0 start-0" alt="{{ product.name }}">
                                     {% else %}
-                                        {# Ако няма втора, повтаряме първата #}
                                         <img src="{{ imgPath1 }}" class="img-back w-100 h-100 object-fit-cover position-absolute top-0 start-0" alt="{{ product.name }}">
                                     {% endif %}
                                 {% else %}
@@ -45,12 +42,13 @@
                                 {% endif %}
                             </a>
 
-                            {# БУТОН ЗА ПРЕМАХВАНЕ (Увери се, че пътят съществува, иначе го махни) #}
-                            {# <a href="{{ path('app_wishlist_remove', {id: product.id}) }}"
-                               class="btn btn-sm btn-light rounded-circle position-absolute top-0 end-0 m-2 shadow-sm text-danger"
-                               title="Премахни">
+                            {# --- БУТОН ЗА ПРЕМАХВАНЕ (АКТИВИРАН) --- #}
+                            <button onclick="removeFromWishlist(this, {{ product.id }})"
+                                    class="btn btn-sm btn-light rounded-circle position-absolute top-0 end-0 m-2 shadow-sm text-danger border-0"
+                                    style="width: 32px; height: 32px; z-index: 10;"
+                                    title="Премахни от любими">
                                 <i class="fas fa-times"></i>
-                            </a> #}
+                            </button>
                         </div>
 
                         {# ИНФОРМАЦИЯ ЗА ПРОДУКТА #}
@@ -66,7 +64,7 @@
                     </div>
                 </div>
             {% else %}
-                <div class="col-12 text-center py-5">
+                <div class="col-12 text-center py-5" id="empty-message">
                     <div class="text-muted">
                         <i class="far fa-heart fa-3x mb-3"></i>
                         <h4>Все още нямате любими продукти.</h4>
@@ -75,6 +73,15 @@
                 </div>
             {% endfor %}
         </div>
+
+        {# Скрито съобщение, което ще се покаже, ако изтрием всички продукти с JS #}
+        <div class="col-12 text-center py-5 d-none" id="js-empty-message">
+            <div class="text-muted">
+                <i class="far fa-heart fa-3x mb-3"></i>
+                <h4>Списъкът с любими вече е празен.</h4>
+                <a href="{{ path('app_home') }}" class="btn btn-primary mt-3 rounded-pill">Разгледай продукти</a>
+            </div>
+        </div>
     </div>
 
     <style>
@@ -82,5 +89,59 @@
         .wishlist-img-container .img-back { z-index: 1; opacity: 0; }
         .wishlist-img-container:hover .img-front { opacity: 0; }
         .wishlist-img-container:hover .img-back { opacity: 1; }
+        /* Ефект при натискане на бутона за триене */
+        .btn-light:hover { background-color: #dc3545; color: white !important; }
     </style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        function removeFromWishlist(btn, productId) {
+            // Питаме потребителя за потвърждение (по желание)
+            if(!confirm('Сигурни ли сте, че искате да премахнете този продукт?')) return;
+
+            // Намираме картата на продукта, за да я скрием
+            const productCard = document.getElementById('product-card-' + productId);
+
+            // Правим картата полупрозрачна веднага, за да се вижда реакция
+            if(productCard) productCard.style.opacity = '0.5';
+
+            fetch('/wishlist/toggle/' + productId, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error('Грешка при комуникация');
+                    return response.json();
+                })
+                .then(data => {
+                    // Ако всичко е наред, махаме елемента от страницата
+                    if(productCard) {
+                        productCard.remove();
+                    }
+
+                    // Обновяваме брояча горе
+                    const counterBadge = document.getElementById('wishlist-counter');
+                    if(counterBadge) {
+                        let currentCount = parseInt(counterBadge.innerText);
+                        if(currentCount > 0) {
+                            currentCount--;
+                            counterBadge.innerText = currentCount + ' артикула';
+                        }
+                    }
+
+                    // Проверяваме дали са останали продукти
+                    const remainingProducts = document.querySelectorAll('.product-item');
+                    if(remainingProducts.length === 0) {
+                        document.getElementById('js-empty-message').classList.remove('d-none');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Възникна грешка при премахването.');
+                    if(productCard) productCard.style.opacity = '1'; // Връщаме видимостта при грешка
+                });
+        }
+    </script>
 {% endblock %}
