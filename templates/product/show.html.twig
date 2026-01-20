@@ -1,7 +1,6 @@
 {% extends 'base.html.twig' %}
 
 {% block meta_og %}
-    {# --- МЕТА ТАГОВЕ ЗА FACEBOOK --- #}
     <meta property="og:title" content="{{ product.name }} | {{ product.price }} евро">
     <meta property="og:type" content="product">
     <meta property="og:description" content="Ръчно изработена красота: {{ product.description|striptags|slice(0, 150) }}...">
@@ -18,11 +17,9 @@
     {{ parent() }}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/drift-zoom@1.3.1/dist/drift-basic.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-    {# Добавяме FontAwesome за иконата на FB, ако липсва в base #}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
-        /* Стилове за продукта */
         .product-details { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 3px 15px rgba(0,0,0,0.1); }
         .price-display { font-size: 2.5rem; color: #20c997; font-weight: bold; }
         .gallery-container { position: sticky; top: 20px; }
@@ -45,18 +42,13 @@
 
         .drift-zoom-pane { background: #fff; border: 3px solid #20c997; border-radius: 8px; z-index: 9999; }
 
-        /* Стилове за FB бутона */
         .btn-facebook {
-            border-color: #1877F2 !important;
-            color: #1877F2 !important;
-            transition: all 0.3s ease;
+            border-color: #1877F2 !important; color: #1877F2 !important; transition: all 0.3s ease;
         }
         .btn-facebook:hover {
-            background-color: #1877F2 !important;
-            color: white !important;
+            background-color: #1877F2 !important; color: white !important;
         }
 
-        /* --- СТИЛОВЕ ЗА МОДАЛНАТА ГАЛЕРИЯ --- */
         .modal-fullscreen-img .modal-content { background-color: rgba(0,0,0,0.95); height: 100%; border: none; }
         .modal-fullscreen-img .modal-body { padding: 0; height: 100%; display: flex; }
         .modal-swiper { width: 100%; height: 100%; }
@@ -82,6 +74,11 @@
             {% endif %}
         {% endmacro %}
         {% import _self as imgHelper %}
+
+        {# --- ВАЖНО: Проверка дали е любим --- #}
+        {% set isFavorite = app.user and product in app.user.favorites %}
+        {% set btnClass = isFavorite ? 'btn-danger' : 'btn-outline-danger' %}
+        {% set iconClass = isFavorite ? 'fas' : 'far' %}
 
         {# --- СЪБИРАНЕ НА СНИМКИ --- #}
         {% set galleryImages = [] %}
@@ -146,13 +143,23 @@
                                 <button class="btn btn-secondary btn-lg flex-grow-1 rounded-pill" disabled>Изчерпано</button>
                             {% endif %}
 
-                            {# --- НОВИЯТ FACEBOOK SHARE БУТОН --- #}
+                            {# --- БУТОН ЗА ЛЮБИМИ (НОВ) --- #}
+
+
+                            {# --- FACEBOOK SHARE --- #}
                             <a href="https://www.facebook.com/sharer/sharer.php?u={{ app.request.uri|url_encode }}"
                                target="_blank"
                                class="btn btn-outline-primary btn-lg rounded-pill flex-grow-1 btn-facebook d-flex align-items-center justify-content-center">
                                 <i class="fab fa-facebook-f me-2"></i> Сподели
                             </a>
+                            <button class="btn {{ btnClass }} rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+                                    style="width: 50px; height: 50px; flex-shrink: 0;"
+                                    onclick="toggleWishlist(this, {{ product.id }})"
+                                    title="Добави в любими">
+                                <i class="{{ iconClass }} fa-heart fs-5"></i>
+                            </button>
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -213,6 +220,34 @@
     <script src="https://cdn.jsdelivr.net/npm/drift-zoom@1.3.1/dist/Drift.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script>
+        // --- ДОБАВЯМЕ ФУНКЦИЯТА ЗА ЛЮБИМИ И ТУК ---
+        window.toggleWishlist = function(btn, productId) {
+            const icon = btn.querySelector('i');
+            const isFav = icon.classList.contains('fas');
+
+            if (isFav) {
+                // Премахване
+                icon.classList.remove('fas', 'text-danger');
+                icon.classList.add('far');
+                btn.classList.remove('btn-danger');
+                btn.classList.add('btn-outline-danger');
+            } else {
+                // Добавяне
+                icon.classList.remove('far');
+                icon.classList.add('fas', 'text-danger');
+                btn.classList.remove('btn-outline-danger');
+                btn.classList.add('btn-danger');
+            }
+
+            fetch('/wishlist/toggle/' + productId, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+                .then(res => { if(!res.ok) console.error('Грешка сървър'); })
+                .catch(err => console.error('Грешка:', err));
+        };
+
+        // --- ОСТАНАЛИЯТ КОД ЗА ГАЛЕРИЯТА ---
         let driftInstance = null;
         const mainImage = document.getElementById('mainImage');
         const modalElement = document.getElementById('imageModal');
