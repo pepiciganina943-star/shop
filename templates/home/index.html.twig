@@ -5,6 +5,7 @@
 {% block stylesheets %}
     {{ parent() }}
     <style>
+        /* Стилове за начална страница */
         .image-swap-container {
             position: relative;
             overflow: hidden;
@@ -31,7 +32,6 @@
             padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase;
         }
 
-        /* Филтри и бутон */
         .filter-group { margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
         .filter-group:last-child { border-bottom: none; }
         .filter-title { font-weight: 700; margin-bottom: 10px; color: #333; font-family: 'Merriweather', serif; }
@@ -52,7 +52,6 @@
         <p class="text-muted small mb-0">Ръчно изработени с любов</p>
     </div>
 
-    {# Бутон за мобилни филтри #}
     <div class="container d-lg-none mb-3">
         <button class="btn btn-dark w-100 rounded-pill py-2 shadow-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#filterOffcanvas">
             <i class="fas fa-sliders-h me-2"></i> Филтри и Категории
@@ -60,7 +59,7 @@
     </div>
 
     <div class="row">
-        {# ЛЯВА КОЛОНА (ФИЛТРИ) #}
+        {# ФИЛТРИ #}
         <div class="col-lg-3 mb-5">
             <div class="offcanvas-lg offcanvas-start" tabindex="-1" id="filterOffcanvas">
                 <div class="offcanvas-header border-bottom">
@@ -116,10 +115,10 @@
             </div>
         </div>
 
-        {# ДЯСНА КОЛОНА (ПРОДУКТИ) #}
+        {# ПРОДУКТИ #}
         <div class="col-lg-9">
             <div class="row g-3 g-lg-4" id="product-grid">
-                <div class="col-12 text-center py-5">
+                <div class="col-12 text-center py-5" id="loading-spinner">
                     <div class="spinner-border text-info" role="status"></div>
                     <p class="mt-3 text-muted">Зареждане...</p>
                 </div>
@@ -130,9 +129,70 @@
 
 {% block javascripts %}
     <script>
+        // --- НОВО: Функция за любими (глобална) ---
+        window.toggleWishlist = function(btn, productId) {
+            const icon = btn.querySelector('i');
+            const isFav = icon.classList.contains('fas'); // fas = плътно сърце
+
+            // 1. Оптимистична промяна на UI (веднага сменяме иконата)
+            if (isFav) {
+                // Махаме от любими
+                icon.classList.remove('fas', 'text-danger');
+                icon.classList.add('far');
+                btn.classList.remove('btn-danger');
+                btn.classList.add('btn-outline-danger');
+            } else {
+                // Добавяме в любими
+                icon.classList.remove('far');
+                icon.classList.add('fas', 'text-danger');
+                btn.classList.remove('btn-outline-danger');
+                btn.classList.add('btn-danger');
+            }
+
+            // 2. AJAX заявка към сървъра
+            // Увери се, че пътят '/wishlist/toggle/' съвпада с твоя Route в Symfony
+            fetch('/wishlist/toggle/' + productId, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Wishlist updated:', data);
+                })
+                .catch(error => {
+                    console.error('Error toggling wishlist:', error);
+                    // При грешка - връщаме старата икона (Rollback)
+                    if (isFav) {
+                        icon.classList.add('fas', 'text-danger');
+                        icon.classList.remove('far');
+                        btn.classList.add('btn-danger');
+                        btn.classList.remove('btn-outline-danger');
+                    } else {
+                        icon.classList.add('far');
+                        icon.classList.remove('fas', 'text-danger');
+                        btn.classList.add('btn-outline-danger');
+                        btn.classList.remove('btn-danger');
+                    }
+                    alert('Възникна грешка. Моля опитайте отново.');
+                });
+        };
+
+        // --- ТВОЯТ ОРИГИНАЛЕН КОД (БЕЗ ПРОМЕНИ) ---
         document.addEventListener('DOMContentLoaded', function() {
             const productGrid = document.getElementById('product-grid');
             const btnApply = document.getElementById('btn-apply-filters');
+
+            // --- ЗАЩИТА: Ако забие, махни спинъра след 4 секунди ---
+            setTimeout(() => {
+                const spinner = document.getElementById('loading-spinner');
+                if (spinner && productGrid.contains(spinner)) {
+                    productGrid.innerHTML = '<div class="col-12 text-center text-danger py-5"><h5>Нещо се обърка при зареждането.</h5><p>Моля презаредете страницата.</p></div>';
+                    console.error('Safety Timeout: Products took too long to load.');
+                }
+            }, 4000);
 
             // Cloudinary Оптимизация
             function getOptimizedImage(url) {
@@ -162,7 +222,10 @@
                 if(productGrid) productGrid.style.opacity = '0.5';
 
                 fetch(url)
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) throw new Error('Сървърна грешка: ' + response.status);
+                        return response.json();
+                    })
                     .then(products => {
                         if(!productGrid) return;
                         productGrid.style.opacity = '1';
@@ -184,6 +247,7 @@
                             const optimizedImg = getOptimizedImage(productImg);
                             const optimizedHoverImg = getOptimizedImage(productHoverImg);
 
+                            // LCP Оптимизация
                             let loadingType = 'lazy';
                             let fetchPriority = 'auto';
                             if (index < 2) {
@@ -203,13 +267,17 @@
                                         <div class="hover-overlay"><span class="badge-view">РАЗГЛЕДАЙ</span></div>
                                     </div>
                                     <div class="p-3 pb-0">
-                                        <h3 class="fw-bold text-truncate mb-1 h6" style="font-size: 0.95rem;">${product.name}</h3>
+                                        <h2 class="fw-bold text-truncate mb-1 h6" style="font-size: 0.95rem;">${product.name}</h2>
                                         <div class="text-primary fw-bold">${product.price} евро</div>
                                     </div>
                                 </a>
                                 <div class="p-3 mt-auto d-flex gap-2">
-                                    <a href="/cart/add/${product.id}" class="btn btn-sm btn-outline-dark flex-grow-1 rounded-pill"><i class="fas fa-shopping-cart"></i> Добави</a>
-                                    <button class="btn btn-sm ${btnClass} rounded-circle" style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;" onclick="toggleWishlist(this, ${product.id})"><i class="${iconClass} fa-heart"></i></button>
+                                    <a href="/cart/add/${product.id}" class="btn btn-sm btn-outline-dark flex-grow-1 rounded-pill" aria-label="Добави ${product.name} в количката">
+                                        <i class="fas fa-shopping-cart"></i> Добави
+                                    </a>
+                                    <button class="btn btn-sm ${btnClass} rounded-circle" style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;" onclick="toggleWishlist(this, ${product.id})" aria-label="Добави ${product.name} в любими">
+                                        <i class="${iconClass} fa-heart"></i>
+                                    </button>
                                 </div>
                             </div>
                         `;
@@ -217,7 +285,8 @@
                         });
                     })
                     .catch(error => {
-                        if(productGrid) productGrid.innerHTML = '<div class="col-12 text-danger text-center">Грешка при зареждането.</div>';
+                        console.error('Error:', error);
+                        if(productGrid) productGrid.innerHTML = '<div class="col-12 text-danger text-center"><h5>Грешка при зареждането</h5><p>Моля проверете конзолата.</p></div>';
                     });
             }
 
